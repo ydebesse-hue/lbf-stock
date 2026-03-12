@@ -8,11 +8,14 @@
 //  CONFIGURATION
 // ═══════════════════════════════════════════════════════
 
+// Détecte si on est à la racine ou dans un sous-dossier (views/)
+const _racine = window.location.pathname.includes('/views/') ? '../' : '';
+
 const AUTH_CONFIG = {
-  sessionKey: 'lbf_session',       // Clé sessionStorage
-  usersPath:  '../data/users.json', // Chemin vers la base utilisateurs
-  loginPage:  '../login.html',      // Page de connexion
-  homePage:   '../index.html',      // Point d'entrée principal
+  sessionKey: 'lbf_session',
+  usersPath:  _racine + 'data/users.json',
+  loginPage:  _racine + 'login.html',
+  homePage:   _racine + 'index.html',
 };
 
 // Table des droits par profil
