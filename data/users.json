@@ -39,6 +39,14 @@
       "motDePasse": "Admin@LBF2025",
       "actif": true,
       "_note": "Compte admin — validation, gestion comptes, accès total. Ne jamais supprimer."
+    }    {
+      "id": "usr_005",
+      "identifiant": "michel",
+      "nomComplet": "michel",
+      "profil": "administration",
+      "motDePasse": "mich",
+      "actif": true,
+      "_note": "Compte gestion — second opérateur atelier"
     }
   ],
 
