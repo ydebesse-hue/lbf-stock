@@ -8,8 +8,16 @@
 //  CONFIGURATION
 // ═══════════════════════════════════════════════════════
 
-// Détecte si on est à la racine ou dans un sous-dossier (views/)
-const _racine = window.location.pathname.includes('/views/') ? '../' : '';
+// Calcule la racine absolue du site (fonctionne sur GitHub Pages et en local)
+const _racine = (function() {
+  const path = window.location.pathname;
+  // Remonter jusqu'à la racine du dépôt (avant /auth/ ou /views/)
+  const base = path
+    .replace(/\/auth\/.*$/, '/')
+    .replace(/\/views\/.*$/, '/')
+    .replace(/\/[^/]*\.html$/, '/');
+  return window.location.origin + base;
+})();
 
 const AUTH_CONFIG = {
   sessionKey: 'lbf_session',
