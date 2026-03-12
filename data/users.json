@@ -43,7 +43,7 @@
       "id": "usr_005",
       "identifiant": "michel",
       "nomComplet": "michel",
-      "profil": "administration",
+      "profil": "gestion",
       "motDePasse": "mich",
       "actif": true,
       "_note": "Compte gestion — second opérateur atelier"
