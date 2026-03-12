@@ -48,7 +48,7 @@
       "motDePasse": "mich",
       "actif": true,
       "_note": "Compte gestion — second opérateur atelier"
-    },
+    }
   ],
 
   "_profils_disponibles": ["consultation", "gestion", "administration"],
