@@ -1692,7 +1692,7 @@ const Stock = (() => {
    * Exécute la validation d'un élément stock (BAR/TOL)
    * Appelée par le bouton Valider de m-valider-stock
    */
-  function _confirmerValidationStock() {
+  async function _confirmerValidationStock() {
     const m = document.getElementById('m-valider-stock');
     if (!m) return;
     const id = m.dataset.idEnCours;
