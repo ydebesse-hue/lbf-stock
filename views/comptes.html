@@ -564,6 +564,7 @@
 <!-- ══════════════════════
      SCRIPTS
 ══════════════════════ -->
+<script src="../js/supabase.js"></script>
 <script src="../auth/auth.js"></script>
 <script>
 /* ============================================================
@@ -593,30 +594,20 @@ const CLE_USERS = 'lbf_users_modifs';
  * Charge users.json et fusionne les modifications localStorage.
  */
 async function chargerUsers() {
-  let base = [];
   try {
-    const rep = await fetch('../data/users.json');
-    if (!rep.ok) throw new Error('users.json introuvable');
-    const data = await rep.json();
-    base = data.users || [];
+    _users = await window.SB.lire('users');
   } catch (err) {
-    console.warn('[Comptes] Impossible de charger users.json :', err);
-    afficherNotif('Impossible de charger la liste des comptes.', 'erreur');
-  }
-
-  // Fusion avec localStorage — les entrées locales priment
-  const local = _chargerLocal();
-  local.forEach(uLocal => {
-    const idx = base.findIndex(u => u.id === uLocal.id);
-    if (idx !== -1) {
-      base[idx] = uLocal;   // Mise à jour
-    } else {
-      base.push(uLocal);    // Ajout nouveau compte
+    console.warn('[Comptes] Supabase indisponible, fallback JSON :', err);
+    try {
+      const rep = await fetch('../data/users.json');
+      if (!rep.ok) throw new Error('users.json introuvable');
+      const data = await rep.json();
+      _users = data.users || [];
+    } catch(e) {
+      afficherNotif('Impossible de charger la liste des comptes.', 'erreur');
+      _users = [];
     }
-  });
-
-  // Supprimer les comptes marqués comme supprimés
-  _users = base.filter(u => !u._supprime);
+  }
   _rendreTableau();
 }
 
@@ -637,23 +628,19 @@ function _chargerLocal() {
  * Persiste un compte (ajout ou modification) dans localStorage.
  * @param {Object} user
  */
-function _persisterUser(user) {
-  const local = _chargerLocal();
-  const idx = local.findIndex(u => u.id === user.id);
-  if (idx !== -1) {
-    local[idx] = user;
-  } else {
-    local.push(user);
+async function _persisterUser(user) {
+  try {
+    await window.SB.upsert('users', user);
+  } catch(e) {
+    console.warn('[Comptes] Supabase indisponible, fallback localStorage :', e);
+    const local = _chargerLocal();
+    const idx = local.findIndex(u => u.id === user.id);
+    if (idx !== -1) { local[idx] = user; } else { local.push(user); }
+    localStorage.setItem(CLE_USERS, JSON.stringify(local));
   }
-  localStorage.setItem(CLE_USERS, JSON.stringify(local));
-
   // Mettre à jour l'état en mémoire
   const idxData = _users.findIndex(u => u.id === user.id);
-  if (idxData !== -1) {
-    _users[idxData] = user;
-  } else {
-    _users.push(user);
-  }
+  if (idxData !== -1) { _users[idxData] = user; } else { _users.push(user); }
 }
 
 /**
@@ -828,7 +815,7 @@ async function sauvegarderCompte() {
     };
   }
 
-  _persisterUser(user);
+  await _persisterUser(user);
   _rendreTableau();
   fermerM('m-compte');
   afficherNotif(_editId ? 'Compte modifié.' : 'Compte créé avec succès.', 'succes');
@@ -870,7 +857,7 @@ async function sauvegarderMdp() {
 
   const hashMdp = await sha256(mdp1);
   const userMaj = { ...user, motDePasse: hashMdp };
-  _persisterUser(userMaj);
+  await _persisterUser(userMaj);
 
   fermerM('m-mdp');
   afficherNotif('Mot de passe mis à jour.', 'succes');
@@ -886,24 +873,21 @@ function ouvrirSuppression(id, nom) {
   ouvrirM('m-supprimer');
 }
 
-function confirmerSuppression() {
+async function confirmerSuppression() {
   if (!_supId) return;
 
-  // Marquer comme supprimé dans localStorage
-  const user = _users.find(u => u.id === _supId);
-  if (user) {
-    const userSup = { ...user, _supprime: true };
-    const local = _chargerLocal();
-    const idx = local.findIndex(u => u.id === _supId);
-    if (idx !== -1) {
-      local[idx] = userSup;
-    } else {
-      local.push(userSup);
+  try {
+    await window.SB.supprimer('users', _supId);
+  } catch(e) {
+    console.warn('[Comptes] Supabase indisponible, fallback localStorage :', e);
+    const user = _users.find(u => u.id === _supId);
+    if (user) {
+      const local = _chargerLocal();
+      local.push({ ...user, _supprime: true });
+      localStorage.setItem(CLE_USERS, JSON.stringify(local));
     }
-    localStorage.setItem(CLE_USERS, JSON.stringify(local));
   }
 
-  // Retirer de l'état en mémoire
   _users = _users.filter(u => u.id !== _supId);
   _supId = null;
 

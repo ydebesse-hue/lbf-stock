@@ -63,16 +63,29 @@ const REDIRECT_APRES_LOGIN = {
 
 
 // ═══════════════════════════════════════════════════════
-//  LECTURE DES UTILISATEURS (JSON local)
+//  LECTURE DES UTILISATEURS (Supabase)
 // ═══════════════════════════════════════════════════════
 
 /**
- * Charge le fichier users.json et retourne le tableau des utilisateurs.
+ * Charge les utilisateurs depuis Supabase.
+ * Fallback sur users.json local si Supabase indisponible.
  * @returns {Promise<Array>}
  */
 async function chargerUtilisateurs() {
+  // Tentative Supabase
   try {
-    const rep = await fetch(AUTH_CONFIG.usersPath);
+    if (window.SB) {
+      const users = await window.SB.lire('users');
+      if (users && users.length) return users;
+    }
+  } catch (err) {
+    console.warn('[Auth] Supabase indisponible, fallback JSON :', err);
+  }
+
+  // Fallback — fichier JSON local
+  try {
+    const racine = _racine;
+    const rep = await fetch(racine + 'data/users.json');
     if (!rep.ok) throw new Error('Impossible de charger users.json');
     const data = await rep.json();
     return data.users || [];

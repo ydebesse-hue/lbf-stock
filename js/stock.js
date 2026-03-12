@@ -61,26 +61,37 @@ const Stock = (() => {
     Auth.afficherInfosSession('#header-user', '#header-badge');
     Auth.appliquerDroitsDOM();
 
-    // Chargement parallèle stock + sections
     try {
-      const [repStock, repSections] = await Promise.all([
-        fetch('../data/stock.json'),
-        fetch('../data/sections.json').catch(() => null)
-      ]);
-
-      if (!repStock.ok) throw new Error(`HTTP ${repStock.status} — vérifiez que Live Server est actif.`);
-      const stockBrut = await repStock.json();
-
-      // Chargement optionnel des sections (pour la cascade dans les modales)
-      if (repSections && repSections.ok) {
-        _sections = await repSections.json();
+      // Chargement stock depuis Supabase
+      let barres = [];
+      try {
+        barres = await window.SB.lire('stock');
+      } catch(e) {
+        console.warn('[Stock] Supabase indisponible, fallback JSON :', e);
+        const rep = await fetch('../data/stock.json');
+        if (!rep.ok) throw new Error(`HTTP ${rep.status}`);
+        const json = await rep.json();
+        barres = json.barres || [];
       }
 
-      // Fusion stock.json + modifications localStorage
-      _data = _fusionnerAvecLocal(stockBrut);
+      // Calculer le compteur depuis les IDs existants
+      const nums = barres.map(b => parseInt((b.id||'').replace(/[^0-9]/g,''),10)).filter(n=>!isNaN(n));
+      const compteur = nums.length ? Math.max(...nums) : 0;
+      _data = { barres, compteur };
 
-      // Charger les demandes en attente depuis localStorage (pour affichage des boutons admin)
-      _demandes = _chargerDemandes().demandes.filter(d => d.statut === 'en_attente');
+      // Charger les sections (pour cascades dans les modales)
+      try {
+        const repSec = await fetch('../data/sections.json');
+        if (repSec.ok) _sections = await repSec.json();
+      } catch(e) { /* sections optionnelles */ }
+
+      // Charger les demandes en attente depuis Supabase
+      try {
+        const demandes = await window.SB.lire('demandes');
+        _demandes = demandes.filter(d => d.statut === 'en_attente');
+      } catch(e) {
+        _demandes = _chargerDemandes().demandes.filter(d => d.statut === 'en_attente');
+      }
 
     } catch (err) {
       _erreurChargement(err.message);
@@ -160,18 +171,12 @@ const Stock = (() => {
    * @returns {string}
    */
   function _genererIdBarre() {
-    const local = _chargerLocal();
-    const compteurActuel = Math.max(
-      _data ? _data.compteur || 0 : 0,
-      local.compteur || 0
-    );
-    const nouveau = compteurActuel + 1;
-
-    // Mettre à jour le compteur local
-    local.compteur = nouveau;
-    _sauvegarderLocal(local);
-
-    return `BAR-${String(nouveau).padStart(4, '0')}`;
+    const nums = _data.barres
+      .filter(b => b.id && b.id.startsWith('BAR-'))
+      .map(b => parseInt(b.id.replace('BAR-',''), 10))
+      .filter(n => !isNaN(n));
+    const max = nums.length ? Math.max(...nums) : 0;
+    return `BAR-${String(max + 1).padStart(4, '0')}`;
   }
 
   /**
@@ -179,39 +184,38 @@ const Stock = (() => {
    * @returns {string}
    */
   function _genererIdTole() {
-    const local = _chargerLocal();
-    const compteurActuel = Math.max(
-      _data ? _data.compteur || 0 : 0,
-      local.compteur || 0
-    );
-    const nouveau = compteurActuel + 1;
-
-    local.compteur = nouveau;
-    _sauvegarderLocal(local);
-
-    return `TOL-${String(nouveau).padStart(4, '0')}`;
+    const nums = _data.barres
+      .filter(b => b.id && b.id.startsWith('TOL-'))
+      .map(b => parseInt(b.id.replace('TOL-',''), 10))
+      .filter(n => !isNaN(n));
+    const max = nums.length ? Math.max(...nums) : 0;
+    return `TOL-${String(max + 1).padStart(4, '0')}`;
   }
 
   /**
-   * Persiste un élément (ajout ou modification) dans localStorage
+   * Persiste un élément (ajout ou modification) dans Supabase
+   * Fallback localStorage si Supabase indisponible
    * @param {Object} element — objet barre ou tôle
    */
-  function _persisterElement(element) {
-    const local = _chargerLocal();
-    const idx = local.barres.findIndex(b => b.id === element.id);
-    if (idx !== -1) {
-      local.barres[idx] = element;
-    } else {
-      local.barres.push(element);
-    }
-    _sauvegarderLocal(local);
-
-    // Mettre à jour _data en mémoire
+  async function _persisterElement(element) {
+    // Mettre à jour _data en mémoire immédiatement
     const idxData = _data.barres.findIndex(b => b.id === element.id);
     if (idxData !== -1) {
       _data.barres[idxData] = element;
     } else {
       _data.barres.push(element);
+    }
+
+    // Persister dans Supabase
+    try {
+      await window.SB.upsert('stock', element);
+    } catch(e) {
+      console.warn('[Stock] Supabase indisponible, fallback localStorage :', e);
+      // Fallback localStorage
+      const local = _chargerLocal();
+      const idx = local.barres.findIndex(b => b.id === element.id);
+      if (idx !== -1) { local.barres[idx] = element; } else { local.barres.push(element); }
+      _sauvegarderLocal(local);
     }
   }
 
@@ -229,17 +233,19 @@ const Stock = (() => {
   }
 
   /**
-   * Persiste une demande d'attribution dans localStorage
+   * Persiste une demande d'attribution dans Supabase
+   * Fallback localStorage si Supabase indisponible
    * @param {Object} demande
    */
-  function _persisterDemande(demande) {
-    const store = _chargerDemandes();
-    store.demandes.push(demande);
-    store.compteur = (store.compteur || 0) + 1;
+  async function _persisterDemande(demande) {
     try {
-      localStorage.setItem(CLE_DEMANDES, JSON.stringify(store));
-    } catch (e) {
-      console.error('Impossible de sauvegarder la demande :', e);
+      await window.SB.upsert('demandes', demande);
+    } catch(e) {
+      console.warn('[Stock] Supabase indisponible, fallback localStorage demande :', e);
+      const store = _chargerDemandes();
+      store.demandes.push(demande);
+      store.compteur = (store.compteur || 0) + 1;
+      try { localStorage.setItem(CLE_DEMANDES, JSON.stringify(store)); } catch {}
     }
   }
 
@@ -962,7 +968,7 @@ const Stock = (() => {
    * Soumet le formulaire d'ajout de profilé
    * @param {HTMLElement} m — modale
    */
-  function _soumettreAjoutProfil(m) {
+  async function _soumettreAjoutProfil(m) {
     const type    = m.querySelector('#ap-type')?.value?.trim();
     const desig   = m.querySelector('#ap-desig')?.value?.trim();
     const longueur = parseFloat(m.querySelector('#ap-longueur')?.value);
@@ -1006,7 +1012,7 @@ const Stock = (() => {
       commentaire
     };
 
-    _persisterElement(barre);
+    await _persisterElement(barre);
     _fermerModale('m-ajout-profil');
     _peuplerFiltres();
     _filtrer();
@@ -1078,7 +1084,7 @@ const Stock = (() => {
    * Soumet le formulaire d'ajout de tôle
    * @param {HTMLElement} m
    */
-  function _soumettreAjoutTole(m) {
+  async function _soumettreAjoutTole(m) {
     const ep  = parseFloat(m.querySelector('#at-epaisseur')?.value);
     const lrg = parseFloat(m.querySelector('#at-largeur')?.value);
     const lng = parseFloat(m.querySelector('#at-longueur')?.value);
@@ -1122,7 +1128,7 @@ const Stock = (() => {
       commentaire
     };
 
-    _persisterElement(tole);
+    await _persisterElement(tole);
     _fermerModale('m-ajout-tole');
     _peuplerFiltres();
     _filtrer();
@@ -1229,7 +1235,7 @@ const Stock = (() => {
    * Soumet la modification
    * @param {HTMLElement} m
    */
-  function _soumettreModification(m) {
+  async function _soumettreModification(m) {
     const categorie = m.dataset.categorieEnCours;
     const id        = m.dataset.idEnCours;
     const original  = _parId(id);
@@ -1276,7 +1282,7 @@ const Stock = (() => {
         modifie_par: session?.identifiant || 'inconnu'
       };
 
-      _persisterElement(modif);
+      await _persisterElement(modif);
 
     } else {
       // Modification tôle
@@ -1315,7 +1321,7 @@ const Stock = (() => {
         modifie_par: session?.identifiant || 'inconnu'
       };
 
-      _persisterElement(modif);
+      await _persisterElement(modif);
     }
 
     // Réafficher la zone correcte
@@ -1384,7 +1390,7 @@ const Stock = (() => {
    * Soumet la demande d'attribution
    * @param {HTMLElement} m
    */
-  function _soumettreDemande(m) {
+  async function _soumettreDemande(m) {
     const demandeur = m.querySelector('#dem-demandeur')?.value?.trim();
     const chantier  = m.querySelector('#dem-chantier')?.value?.trim();
     const commentaire = m.querySelector('#dem-commentaire')?.value?.trim() || '';
@@ -1408,7 +1414,7 @@ const Stock = (() => {
       demande_par: Auth.getSession()?.identifiant || 'visiteur'
     };
 
-    _persisterDemande(demande);
+    await _persisterDemande(demande);
     _fermerModale('m-demande');
     _notif(`Demande ${demande.id} envoyée — en attente de validation admin`, 'info');
   }
@@ -1537,7 +1543,7 @@ const Stock = (() => {
    * Distingue : ajout/modif stock (BAR/TOL) vs demande d'attribution (DEM)
    * @param {string} id — identifiant BAR-XXXX, TOL-XXXX ou DEM-XXXX
    */
-  function validerElement(id) {
+  async function validerElement(id) {
     if (id.startsWith('DEM-')) {
       // Validation d'une demande d'attribution
       const store   = _chargerDemandes();
@@ -1558,7 +1564,7 @@ const Stock = (() => {
    * Ouvre la modale de confirmation de refus
    * @param {string} id — identifiant BAR-XXXX, TOL-XXXX ou DEM-XXXX
    */
-  function refuserElement(id) {
+  async function refuserElement(id) {
     if (id.startsWith('DEM-')) {
       const store = _chargerDemandes();
       _selection   = store.demandes.find(d => d.id === id) || null;
@@ -1705,7 +1711,7 @@ const Stock = (() => {
       date_validation: _dateAujourdhui()
     };
 
-    _persisterElement(valide);
+    await _persisterElement(valide);
     _fermerModale('m-valider-stock');
     _filtrer();
     _majAlerteAttente();
@@ -1717,26 +1723,33 @@ const Stock = (() => {
    * Exécute la validation d'une demande d'attribution (DEM)
    * Appelée par le bouton Valider de m-valider-demande
    */
-  function _confirmerValidationDemande() {
+  async function _confirmerValidationDemande() {
     const m = document.getElementById('m-valider-demande');
     if (!m) return;
     const idDem = m.dataset.idEnCours;
     if (!idDem) return;
 
-    const store = _chargerDemandes();
-    const idx   = store.demandes.findIndex(d => d.id === idDem);
-    if (idx === -1) return _notif('Demande introuvable', 'erreur');
+    const dem = _demandes.find(d => d.id === idDem);
+    if (!dem) return _notif('Demande introuvable', 'erreur');
 
-    const dem = store.demandes[idx];
-
-    // Mettre à jour la demande → validée
-    store.demandes[idx] = {
+    const session = Auth.getSession();
+    const demMAJ = {
       ...dem,
       statut: 'valide',
       date_traitement: _dateAujourdhui(),
-      traite_par: Auth.getSession()?.identifiant || 'admin'
+      traite_par: session?.identifiant || 'admin'
     };
-    try { localStorage.setItem(CLE_DEMANDES, JSON.stringify(store)); } catch (e) { /* silent */ }
+
+    // Persister la demande mise à jour dans Supabase
+    try {
+      await window.SB.upsert('demandes', demMAJ);
+    } catch(e) {
+      console.warn('[Stock] Supabase indisponible pour la demande :', e);
+      const store = _chargerDemandes();
+      const idx = store.demandes.findIndex(d => d.id === idDem);
+      if (idx !== -1) { store.demandes[idx] = demMAJ; } else { store.demandes.push(demMAJ); }
+      try { localStorage.setItem(CLE_DEMANDES, JSON.stringify(store)); } catch {}
+    }
 
     // Mettre à jour la barre → affectée au chantier demandé
     const barre = _parId(dem.id_barre);
@@ -1747,18 +1760,22 @@ const Stock = (() => {
         chantier_affectation: dem.chantier_demande,
         statut: 'valide',
         date_modif: _dateAujourdhui(),
-        modifie_par: Auth.getSession()?.identifiant || 'admin'
+        modifie_par: session?.identifiant || 'admin'
       };
-      _persisterElement(barreMAJ);
+      await _persisterElement(barreMAJ);
     }
 
     // Rafraîchir la liste des demandes en mémoire
-    _demandes = _chargerDemandes().demandes.filter(d => d.statut === 'en_attente');
+    try {
+      const demandes = await window.SB.lire('demandes');
+      _demandes = demandes.filter(d => d.statut === 'en_attente');
+    } catch(e) {
+      _demandes = _chargerDemandes().demandes.filter(d => d.statut === 'en_attente');
+    }
 
     _fermerModale('m-valider-demande');
     _filtrer();
     _majAlerteAttente();
-
     _notif(`Demande ${idDem} validée — barre affectée à "${dem.chantier_demande}"`, 'succes');
   }
 
@@ -1766,39 +1783,46 @@ const Stock = (() => {
    * Exécute le refus d'un élément (stock ou demande)
    * Appelée par le bouton Confirmer le refus de m-confirmation
    */
-  function _confirmerRefus() {
+  async function _confirmerRefus() {
     const m = document.getElementById('m-confirmation');
     if (!m) return;
-    const id     = m.dataset.idEnCours;
-    const motif  = m.querySelector('#conf-motif')?.value?.trim() || '';
+    const id    = m.dataset.idEnCours;
+    const motif = m.querySelector('#conf-motif')?.value?.trim() || '';
     if (!id) return;
 
     const session = Auth.getSession();
 
     if (id.startsWith('DEM-')) {
-      // Refus d'une demande d'attribution
-      const store = _chargerDemandes();
-      const idx   = store.demandes.findIndex(d => d.id === id);
-      if (idx !== -1) {
-        store.demandes[idx] = {
-          ...store.demandes[idx],
+      const dem = _demandes.find(d => d.id === id);
+      if (dem) {
+        const demRefus = {
+          ...dem,
           statut: 'refuse',
           motif_refus: motif,
           date_traitement: _dateAujourdhui(),
           traite_par: session?.identifiant || 'admin'
         };
-        try { localStorage.setItem(CLE_DEMANDES, JSON.stringify(store)); } catch (e) { /* silent */ }
+        try {
+          await window.SB.upsert('demandes', demRefus);
+        } catch(e) {
+          const store = _chargerDemandes();
+          const idx = store.demandes.findIndex(d => d.id === id);
+          if (idx !== -1) { store.demandes[idx] = demRefus; } else { store.demandes.push(demRefus); }
+          try { localStorage.setItem(CLE_DEMANDES, JSON.stringify(store)); } catch {}
+        }
       }
-      // Rafraîchir la liste des demandes en mémoire
-      _demandes = _chargerDemandes().demandes.filter(d => d.statut === 'en_attente');
+      try {
+        const demandes = await window.SB.lire('demandes');
+        _demandes = demandes.filter(d => d.statut === 'en_attente');
+      } catch(e) {
+        _demandes = _chargerDemandes().demandes.filter(d => d.statut === 'en_attente');
+      }
       _fermerModale('m-confirmation');
       _filtrer();
       _notif(`Demande ${id} refusée`, 'info');
     } else {
-      // Refus d'un élément stock → statut "refuse"
       const el = _parId(id);
       if (!el) return _notif('Élément introuvable', 'erreur');
-
       const refuse = {
         ...el,
         statut: 'refuse',
@@ -1806,7 +1830,7 @@ const Stock = (() => {
         date_validation: _dateAujourdhui(),
         valide_par: session?.identifiant || 'admin'
       };
-      _persisterElement(refuse);
+      await _persisterElement(refuse);
       _fermerModale('m-confirmation');
       _filtrer();
       _majAlerteAttente();
