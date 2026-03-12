@@ -11,10 +11,10 @@
 // Calcule la racine absolue du site (fonctionne sur GitHub Pages et en local)
 const _racine = (function() {
   const path = window.location.pathname;
-  // Remonter jusqu'à la racine du dépôt (avant /auth/ ou /views/)
+  // Supprimer tout ce qui suit /auth/ ou /views/ ou le fichier html à la racine
   const base = path
-    .replace(/\/auth\/.*$/, '/')
-    .replace(/\/views\/.*$/, '/')
+    .replace(/\/auth\/[^/]*$/, '/')
+    .replace(/\/views\/[^/]*$/, '/')
     .replace(/\/[^/]*\.html$/, '/');
   return window.location.origin + base;
 })();
