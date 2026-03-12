@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — Stock Métallerie LBF</title>
+  <style>
+    /* ═══════════════════════════════
+       VARIABLES & BASE
+    ═══════════════════════════════ */
+    :root {
+      --rouge:      rgb(210, 35, 42);
+      --rouge-dark: rgb(170, 25, 30);
+      --noir:       rgb(30, 30, 35);
+      --vert:       rgb(45, 95, 50);
+      --gris-bord:  #c4c4c4;
+      --gris-bg:    #f0f0f0;
+      --blanc:      #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Tahoma, Geneva, sans-serif;
+      background: var(--noir);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* Texture subtile */
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(255,255,255,0.015) 2px,
+          rgba(255,255,255,0.015) 4px
+        );
+    }
+
+    /* ═══════════════════════════════
+       CARTE DE CONNEXION
+    ═══════════════════════════════ */
+    .login-card {
+      background: var(--blanc);
+      border-top: 5px solid var(--rouge);
+      border-radius: 4px;
+      width: 340px;
+      padding: 36px 38px 28px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      animation: apparition 0.3s ease-out;
+    }
+
+    @keyframes apparition {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Logo */
+    .logo-zone {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .logo-zone img {
+      height: 52px;
+      display: block;
+      margin: 0 auto 14px;
+    }
+
+    .logo-fallback {
+      font-family: Impact, Haettenschweiler, sans-serif;
+      font-size: 22px;
+      letter-spacing: 3px;
+      color: var(--noir);
+      text-transform: uppercase;
+    }
+
+    .logo-fallback span { color: var(--rouge); }
+
+    /* Titre module */
+    .module-titre {
+      font-family: Impact, Haettenschweiler, sans-serif;
+      font-size: 15px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #999;
+      text-align: center;
+      margin-bottom: 26px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* Champs */
+    .champ {
+      margin-bottom: 14px;
+    }
+
+    .champ label {
+      display: block;
+      font-size: 10px;
+      font-weight: bold;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 5px;
+    }
+
+    .champ input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      font-family: Tahoma, sans-serif;
+      font-size: 13px;
+      color: var(--noir);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+
+    .champ input:focus {
+      border-color: var(--rouge);
+      box-shadow: 0 0 0 2px rgba(210, 35, 42, 0.12);
+    }
+
+    /* Bouton principal */
+    .btn-connexion {
+      width: 100%;
+      padding: 11px;
+      background: var(--rouge);
+      color: white;
+      border: none;
+      border-radius: 3px;
+      font-family: Impact, Haettenschweiler, sans-serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-connexion:hover  { background: var(--rouge-dark); }
+    .btn-connexion:active { transform: scale(0.99); }
+
+    .btn-connexion:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Message d'erreur */
+    .msg-erreur {
+      display: none;
+      background: #fde8e8;
+      border: 1px solid var(--rouge);
+      border-left: 4px solid var(--rouge);
+      border-radius: 3px;
+      padding: 9px 12px;
+      font-size: 12px;
+      color: var(--rouge);
+      margin-top: 12px;
+      animation: apparition 0.2s ease-out;
+    }
+
+    .msg-erreur.visible { display: block; }
+
+    /* Lien consultation */
+    .lien-consultation {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: var(--rouge);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .lien-consultation:hover { color: var(--rouge-dark); }
+
+    .lien-consultation small {
+      display: block;
+      color: #bbb;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    /* Pied de carte */
+    .login-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 10px;
+      color: #ccc;
+      letter-spacing: 0.5px;
+    }
+
+    /* Loader spinner */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 7px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Champ mot de passe + bouton œil */
+    .champ-mdp-wrap {
+      position: relative;
+    }
+
+    .champ-mdp-wrap input {
+      padding-right: 38px;
+    }
+
+    .btn-oeil {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: #aaa;
+      font-size: 15px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .btn-oeil:hover { color: var(--rouge); }
+
+    /* ═══════════════════════════════
+       RESPONSIVE MOBILE
+    ═══════════════════════════════ */
+    @media (max-width: 400px) {
+      .login-card {
+        width: calc(100vw - 28px);
+        padding: 28px 22px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card" role="main">
+
+    <!-- Logo -->
+    <div class="logo-zone">
+      <img
+        src="assets/Logo_LBF.png"
+        alt="Le Bras Frères"
+        onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='block'"
+      >
+      <div id="logo-fallback" class="logo-fallback" style="display:none">
+        LBF <span>●</span>
+      </div>
+    </div>
+
+    <!-- Titre -->
+    <div class="module-titre">Stock Métallerie</div>
+
+    <!-- Formulaire -->
+    <div class="champ">
+      <label for="inp-identifiant">Identifiant</label>
+      <input
+        type="text"
+        id="inp-identifiant"
+        placeholder="ex : p.dupont"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+      >
+    </div>
+
+    <div class="champ">
+      <label for="inp-mdp">Mot de passe</label>
+      <div class="champ-mdp-wrap">
+        <input
+          type="password"
+          id="inp-mdp"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        >
+        <button
+          type="button"
+          class="btn-oeil"
+          id="btn-oeil"
+          onclick="toggleMdp()"
+          title="Afficher / masquer le mot de passe"
+          aria-label="Afficher le mot de passe"
+        >👁</button>
+      </div>
+    </div>
+
+    <button class="btn-connexion" id="btn-login" onclick="tentativeLogin()">
+      SE CONNECTER
+    </button>
+
+    <!-- Message d'erreur -->
+    <div class="msg-erreur" id="msg-erreur" role="alert" aria-live="polite"></div>
+
+    <!-- Lien consultation anonyme -->
+    <a class="lien-consultation" href="views/stock.html" id="lien-consultation" onclick="entrerEnConsultation(event)">
+      Consulter sans connexion →
+      <small>Lecture seule</small>
+    </a>
+
+    <div class="login-footer">Le Bras Frères — Atelier Métallerie</div>
+  </div>
+
+  <!-- Auth engine -->
+  <script src="auth/auth.js"></script>
+  <script>
+    // ─── Redirection si déjà connecté ───────────────────
+    (function() {
+      const session = window.Auth.getSession();
+      if (session) {
+        const dest = {
+          consultation:   'views/stock.html',
+          gestion:        'views/stock.html',
+          administration: 'views/stock.html',
+        };
+        window.location.href = dest[session.profil] || 'views/stock.html';
+      }
+    })();
+
+    // ─── Afficher / masquer le mot de passe ─────────────
+    function toggleMdp() {
+      const inp = document.getElementById('inp-mdp');
+      const btn = document.getElementById('btn-oeil');
+      const visible = inp.type === 'text';
+      inp.type = visible ? 'password' : 'text';
+      btn.textContent = visible ? '👁' : '🙈';
+      btn.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+    }
+
+    // ─── Entrée au clavier (touche Entrée) ──────────────
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') tentativeLogin();
+    });
+
+    // ─── Tentative de connexion ──────────────────────────
+    async function tentativeLogin() {
+      const btn       = document.getElementById('btn-login');
+      const msgErreur = document.getElementById('msg-erreur');
+      const identif   = document.getElementById('inp-identifiant').value.trim();
+      const mdp       = document.getElementById('inp-mdp').value;
+
+      // Reset erreur
+      msgErreur.classList.remove('visible');
+
+      // Validation basique
+      if (!identif || !mdp) {
+        afficherErreur('Veuillez renseigner l\'identifiant et le mot de passe.');
+        return;
+      }
+
+      // État chargement
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Connexion…';
+
+      const resultat = await window.Auth.login(identif, mdp);
+
+      if (resultat.ok) {
+        // Redirection selon profil
+        const redirections = {
+          consultation:   'views/stock.html',
+          gestion:        'views/stock.html',
+          administration: 'views/stock.html',
+        };
+        const dest = redirections[resultat.utilisateur.profil] || 'views/stock.html';
+        window.location.href = dest;
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'SE CONNECTER';
+        afficherErreur(resultat.erreur || 'Erreur de connexion.');
+        // Focus sur le bon champ
+        if (resultat.erreur && resultat.erreur.includes('mot de passe')) {
+          document.getElementById('inp-mdp').focus();
+          document.getElementById('inp-mdp').select();
+        } else {
+          document.getElementById('inp-identifiant').focus();
+        }
+      }
+    }
+
+    // ─── Accès consultation anonyme ─────────────────────
+    function entrerEnConsultation(e) {
+      e.preventDefault();
+      // On crée une session de consultation anonyme minimale
+      const sessionAnon = {
+        id:          'anon',
+        identifiant: 'visiteur',
+        nomComplet:  'Visiteur',
+        profil:      'consultation',
+        droits: {
+          can_view:         true,
+          can_request:      true,
+          can_edit:         false,
+          can_add:          false,
+          can_validate:     false,
+          can_manage_users: false,
+        },
+        loginAt: Date.now(),
+        anonyme: true,
+      };
+      sessionStorage.setItem('lbf_session', JSON.stringify(sessionAnon));
+      window.location.href = 'views/stock.html';
+    }
+
+    // ─── Affichage message erreur ────────────────────────
+    function afficherErreur(msg) {
+      const el = document.getElementById('msg-erreur');
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+  </script>
+
+</body>
+</html>

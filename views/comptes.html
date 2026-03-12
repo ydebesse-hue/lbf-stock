@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comptes — Stock Métallerie LBF</title>
+  <style>
+    /* ============================================================
+       VARIABLES ET RESET
+       ============================================================ */
+    :root {
+      --rouge:      rgb(210, 35, 42);
+      --rouge-dark: rgb(170, 25, 30);
+      --noir:       rgb(30, 30, 35);
+      --vert:       rgb(45, 95, 50);
+      --or:         #856404;
+      --or-bg:      #fff3cd;
+      --or-bord:    #e0a800;
+      --gris-bg:    #f0f0f0;
+      --gris-clair: #e4e4e4;
+      --gris-bord:  #c4c4c4;
+      --blanc:      #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Tahoma, Geneva, sans-serif;
+      background: var(--gris-bg);
+      color: var(--noir);
+      font-size: 13px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      background: var(--noir);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 54px;
+      border-bottom: 3px solid var(--rouge);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-zone { display: flex; align-items: center; gap: 10px; }
+    .logo-zone img { height: 36px; filter: brightness(10); }
+
+    .app-title {
+      font-family: Impact, Haettenschweiler, sans-serif;
+      color: white;
+      font-size: 18px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .app-title span { color: var(--rouge); }
+
+    .header-droite { display: flex; align-items: center; gap: 10px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 2px;
+      font-family: Impact, sans-serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .badge-rouge { background: var(--rouge); color: white; }
+    .badge-vert  { background: var(--vert);  color: white; }
+    .badge-or    { background: var(--or);    color: white; }
+
+    #header-user { color: #aaa; font-size: 12px; }
+
+    .btn-deco {
+      background: none;
+      border: 1px solid #555;
+      color: #aaa;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 2px;
+      font-family: Tahoma;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-deco:hover { border-color: #888; color: #ccc; }
+
+    /* ── NAVIGATION ─────────────────────────────────────────── */
+    .main-nav {
+      background: var(--blanc);
+      border-bottom: 2px solid var(--gris-clair);
+      display: flex;
+      padding: 0 20px;
+      align-items: center;
+    }
+
+    .nav-item {
+      padding: 10px 18px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-family: Tahoma;
+      font-size: 13px;
+      font-weight: bold;
+      color: #777;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .nav-item:hover { color: var(--noir); }
+    .nav-item.active { color: var(--rouge); border-bottom-color: var(--rouge); }
+    .nav-item-droite { margin-left: auto; color: var(--or) !important; }
+
+    /* ── CONTENU PRINCIPAL ───────────────────────────────────── */
+    .page-contenu {
+      max-width: 900px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .page-titre {
+      font-family: Impact, Haettenschweiler, sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--noir);
+    }
+
+    /* ── TABLEAU DES COMPTES ─────────────────────────────────── */
+    .table-wrap {
+      background: var(--blanc);
+      border: 1px solid var(--gris-clair);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      background: var(--noir);
+      color: white;
+      font-family: Impact, sans-serif;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    tbody tr { border-bottom: 1px solid #eee; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+    tbody td { padding: 10px 12px; vertical-align: middle; }
+
+    .profil-label {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-family: Impact, sans-serif;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .profil-consultation   { background: #fde8e8; color: var(--rouge); border: 1px solid var(--rouge); }
+    .profil-gestion        { background: #e6f4ea; color: var(--vert);  border: 1px solid var(--vert); }
+    .profil-administration { background: var(--or-bg); color: var(--or); border: 1px solid var(--or-bord); }
+
+    .statut-actif    { color: var(--vert); font-weight: bold; }
+    .statut-inactif  { color: #aaa; }
+
+    /* ── BOUTONS ─────────────────────────────────────────────── */
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: Tahoma;
+      font-size: 13px;
+      font-weight: bold;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-rouge  { background: var(--rouge); color: white; }
+    .btn-vert   { background: var(--vert);  color: white; }
+    .btn-gris   { background: #e0e0e0; color: var(--noir); }
+    .btn-danger { background: #dc3545; color: white; }
+
+    .btn-ligne {
+      padding: 4px 9px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: Tahoma;
+      font-size: 11px;
+      font-weight: bold;
+      margin-right: 3px;
+      transition: opacity .15s;
+    }
+    .btn-ligne:hover { opacity: .85; }
+    .btn-ligne:disabled { opacity: .35; cursor: not-allowed; }
+    .bl-modifier { background: var(--vert);  color: white; }
+    .bl-supprimer { background: #dc3545; color: white; }
+    .bl-mdp      { background: #6c757d; color: white; }
+
+    /* ── ZONE VIDE ───────────────────────────────────────────── */
+    .zone-vide {
+      text-align: center;
+      padding: 32px;
+      color: #aaa;
+      font-size: 13px;
+    }
+
+    /* ── NOTIFICATION ────────────────────────────────────────── */
+    #notif {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 18px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: bold;
+      color: white;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      display: none;
+      animation: slideIn .2s ease-out;
+    }
+    .notif-succes  { background: var(--vert); }
+    .notif-erreur  { background: var(--rouge); }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── MODALES ─────────────────────────────────────────────── */
+    .modale-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+    .modale-bg.open { display: flex; }
+
+    .modale {
+      background: white;
+      border-top: 4px solid var(--rouge);
+      border-radius: 4px;
+      width: 480px;
+      max-width: 96vw;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 24px 26px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      animation: apparition .2s ease-out;
+    }
+
+    @keyframes apparition {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modale-titre {
+      font-family: Impact, Haettenschweiler, sans-serif;
+      font-size: 17px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+      color: var(--noir);
+    }
+
+    .champ {
+      margin-bottom: 14px;
+    }
+
+    .champ label {
+      display: block;
+      font-size: 10px;
+      font-weight: bold;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      margin-bottom: 5px;
+    }
+
+    .champ input,
+    .champ select {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      font-family: Tahoma;
+      font-size: 13px;
+      color: var(--noir);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .champ input:focus,
+    .champ select:focus {
+      border-color: var(--rouge);
+      box-shadow: 0 0 0 2px rgba(210,35,42,.12);
+    }
+
+    .champ-mdp-wrap { position: relative; }
+    .champ-mdp-wrap input { padding-right: 38px; }
+    .btn-oeil {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer; color: #aaa; font-size: 15px;
+      transition: color .15s;
+    }
+    .btn-oeil:hover { color: var(--rouge); }
+
+    .modale-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--gris-clair);
+    }
+
+    .note-info {
+      background: #e8f0fe;
+      border: 1px solid #a8c4f8;
+      padding: 8px 12px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: #1a56c4;
+      margin-bottom: 12px;
+    }
+
+    .note-danger {
+      background: #fde8e8;
+      border: 1px solid var(--rouge);
+      padding: 8px 12px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: var(--rouge);
+      margin-bottom: 12px;
+    }
+
+    /* ── Erreur champ ────────────────────────────────────────── */
+    .msg-erreur-modale {
+      display: none;
+      color: var(--rouge);
+      font-size: 12px;
+      margin-top: -8px;
+      margin-bottom: 10px;
+    }
+    .msg-erreur-modale.visible { display: block; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .page-contenu { padding: 0 12px; margin: 14px auto; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      thead th:nth-child(3),
+      tbody td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════
+     HEADER
+══════════════════════ -->
+<header>
+  <div class="logo-zone">
+    <img src="../assets/Logo_LBF.png" alt="Le Bras Frères"
+         onerror="this.style.display='none'">
+    <div class="app-title">Stock <span>Métallerie</span></div>
+  </div>
+  <div class="header-droite">
+    <span id="header-badge" class="badge badge-or">Administration</span>
+    <span id="header-user" class="user-info">Admin</span>
+    <button class="btn-deco" onclick="Auth.logout()">Déconnexion</button>
+  </div>
+</header>
+
+<!-- ══════════════════════
+     NAVIGATION
+══════════════════════ -->
+<nav class="main-nav">
+  <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span> Stock</a>
+  <a href="bibliotheque.html" class="nav-item"><span class="nav-icon">📚</span> Bibliothèque</a>
+  <a href="comptes.html" class="nav-item active nav-item-droite"><span class="nav-icon">⚙</span> Comptes</a>
+</nav>
+
+<!-- ══════════════════════
+     CONTENU
+══════════════════════ -->
+<div class="page-contenu">
+
+  <div class="page-header">
+    <h1 class="page-titre">Gestion des comptes</h1>
+    <button class="btn btn-rouge" onclick="ouvrirCreation()">+ Ajouter un compte</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tableau-comptes">
+      <thead>
+        <tr>
+          <th>Identifiant</th>
+          <th>Nom complet</th>
+          <th>Profil</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="comptes-tbody">
+        <tr><td colspan="5" class="zone-vide">Chargement…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ══════════════════════
+     NOTIFICATION
+══════════════════════ -->
+<div id="notif"></div>
+
+<!-- ══════════════════════════════════════
+     MODALE — CRÉER / MODIFIER COMPTE
+══════════════════════════════════════ -->
+<div id="m-compte" class="modale-bg" onclick="bgClose(event,'m-compte')">
+  <div class="modale" onclick="event.stopPropagation()">
+    <div class="modale-titre" id="m-compte-titre">Nouveau compte</div>
+
+    <div class="note-info" id="m-compte-info" style="display:none"></div>
+
+    <div class="champ">
+      <label for="mc-identifiant">Identifiant *</label>
+      <input type="text" id="mc-identifiant" placeholder="ex : p.dupont"
+             autocapitalize="none" spellcheck="false">
+    </div>
+
+    <div class="champ">
+      <label for="mc-nom">Nom complet *</label>
+      <input type="text" id="mc-nom" placeholder="ex : Pierre Dupont">
+    </div>
+
+    <div class="champ">
+      <label for="mc-profil">Profil *</label>
+      <select id="mc-profil">
+        <option value="consultation">Consultation — lecture seule</option>
+        <option value="gestion">Gestion — ajouts soumis à validation</option>
+        <option value="administration">Administration — accès complet</option>
+      </select>
+    </div>
+
+    <div class="champ" id="mc-mdp-zone">
+      <label for="mc-mdp">Mot de passe *</label>
+      <div class="champ-mdp-wrap">
+        <input type="password" id="mc-mdp" placeholder="Mot de passe">
+        <button type="button" class="btn-oeil" onclick="toggleMdp('mc-mdp','mc-oeil')" id="mc-oeil">👁</button>
+      </div>
+    </div>
+
+    <div class="champ" id="mc-mdp2-zone">
+      <label for="mc-mdp2">Confirmer le mot de passe *</label>
+      <div class="champ-mdp-wrap">
+        <input type="password" id="mc-mdp2" placeholder="Confirmation">
+        <button type="button" class="btn-oeil" onclick="toggleMdp('mc-mdp2','mc-oeil2')" id="mc-oeil2">👁</button>
+      </div>
+    </div>
+
+    <div class="champ">
+      <label for="mc-actif">Statut</label>
+      <select id="mc-actif">
+        <option value="true">Actif</option>
+        <option value="false">Désactivé</option>
+      </select>
+    </div>
+
+    <div class="msg-erreur-modale" id="mc-erreur"></div>
+
+    <div class="modale-footer">
+      <button class="btn btn-gris" onclick="fermerM('m-compte')">Annuler</button>
+      <button class="btn btn-rouge" onclick="sauvegarderCompte()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODALE — CHANGER MOT DE PASSE
+══════════════════════════════════════ -->
+<div id="m-mdp" class="modale-bg" onclick="bgClose(event,'m-mdp')">
+  <div class="modale" onclick="event.stopPropagation()">
+    <div class="modale-titre">Changer le mot de passe</div>
+    <p style="font-size:13px; color:#555; margin-bottom:14px">
+      Compte : <strong id="mdp-nom-compte"></strong>
+    </p>
+
+    <div class="champ">
+      <label for="mdp-nouveau">Nouveau mot de passe *</label>
+      <div class="champ-mdp-wrap">
+        <input type="password" id="mdp-nouveau" placeholder="Nouveau mot de passe">
+        <button type="button" class="btn-oeil" onclick="toggleMdp('mdp-nouveau','mdp-oeil1')" id="mdp-oeil1">👁</button>
+      </div>
+    </div>
+
+    <div class="champ">
+      <label for="mdp-confirme">Confirmer *</label>
+      <div class="champ-mdp-wrap">
+        <input type="password" id="mdp-confirme" placeholder="Confirmation">
+        <button type="button" class="btn-oeil" onclick="toggleMdp('mdp-confirme','mdp-oeil2')" id="mdp-oeil2">👁</button>
+      </div>
+    </div>
+
+    <div class="msg-erreur-modale" id="mdp-erreur"></div>
+
+    <div class="modale-footer">
+      <button class="btn btn-gris" onclick="fermerM('m-mdp')">Annuler</button>
+      <button class="btn btn-rouge" onclick="sauvegarderMdp()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODALE — CONFIRMATION SUPPRESSION
+══════════════════════════════════════ -->
+<div id="m-supprimer" class="modale-bg" onclick="bgClose(event,'m-supprimer')">
+  <div class="modale" onclick="event.stopPropagation()">
+    <div class="modale-titre">Supprimer le compte</div>
+    <div class="note-danger">
+      ⚠ Cette action est irréversible. Le compte sera définitivement supprimé.
+    </div>
+    <p style="font-size:13px; color:#555; margin-bottom:16px">
+      Supprimer le compte <strong id="sup-nom-compte"></strong> ?
+    </p>
+    <div class="modale-footer">
+      <button class="btn btn-gris" onclick="fermerM('m-supprimer')">Annuler</button>
+      <button class="btn btn-danger" onclick="confirmerSuppression()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════
+     SCRIPTS
+══════════════════════ -->
+<script src="../auth/auth.js"></script>
+<script>
+/* ============================================================
+   GESTION DES COMPTES — comptes.html
+   Données lues depuis data/users.json
+   Modifications persistées dans localStorage (clé lbf_users_modifs)
+   Migration SharePoint Conv. 7 : remplacer _chargerUsers / _persisterUsers
+   ============================================================ */
+
+// ── Garde de route — Admin uniquement ───────────────────────
+const _session = Auth.requireAuth('administration');
+Auth.afficherInfosSession('#header-user', '#header-badge');
+
+// ── État local ───────────────────────────────────────────────
+let _users   = [];   // Tableau complet des comptes
+let _editId  = null; // ID du compte en cours de modification
+let _supId   = null; // ID du compte à supprimer
+
+// ── Clé localStorage ────────────────────────────────────────
+const CLE_USERS = 'lbf_users_modifs';
+
+/* ============================================================
+   CHARGEMENT DES DONNÉES
+   ============================================================ */
+
+/**
+ * Charge users.json et fusionne les modifications localStorage.
+ */
+async function chargerUsers() {
+  let base = [];
+  try {
+    const rep = await fetch('../data/users.json');
+    if (!rep.ok) throw new Error('users.json introuvable');
+    const data = await rep.json();
+    base = data.users || [];
+  } catch (err) {
+    console.warn('[Comptes] Impossible de charger users.json :', err);
+    afficherNotif('Impossible de charger la liste des comptes.', 'erreur');
+  }
+
+  // Fusion avec localStorage — les entrées locales priment
+  const local = _chargerLocal();
+  local.forEach(uLocal => {
+    const idx = base.findIndex(u => u.id === uLocal.id);
+    if (idx !== -1) {
+      base[idx] = uLocal;   // Mise à jour
+    } else {
+      base.push(uLocal);    // Ajout nouveau compte
+    }
+  });
+
+  // Supprimer les comptes marqués comme supprimés
+  _users = base.filter(u => !u._supprime);
+  _rendreTableau();
+}
+
+/**
+ * Lit les comptes modifiés depuis localStorage.
+ * @returns {Array}
+ */
+function _chargerLocal() {
+  try {
+    const raw = localStorage.getItem(CLE_USERS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Persiste un compte (ajout ou modification) dans localStorage.
+ * @param {Object} user
+ */
+function _persisterUser(user) {
+  const local = _chargerLocal();
+  const idx = local.findIndex(u => u.id === user.id);
+  if (idx !== -1) {
+    local[idx] = user;
+  } else {
+    local.push(user);
+  }
+  localStorage.setItem(CLE_USERS, JSON.stringify(local));
+
+  // Mettre à jour l'état en mémoire
+  const idxData = _users.findIndex(u => u.id === user.id);
+  if (idxData !== -1) {
+    _users[idxData] = user;
+  } else {
+    _users.push(user);
+  }
+}
+
+/**
+ * Génère un nouvel ID de type USR-XXX.
+ * @returns {string}
+ */
+function _genIdUser() {
+  const nums = _users
+    .map(u => parseInt((u.id || '').replace('USR-', ''), 10))
+    .filter(n => !isNaN(n));
+  const max = nums.length ? Math.max(...nums) : 0;
+  return 'USR-' + String(max + 1).padStart(3, '0');
+}
+
+/* ============================================================
+   AFFICHAGE DU TABLEAU
+   ============================================================ */
+
+/**
+ * Rendu du tableau des comptes.
+ */
+function _rendreTableau() {
+  const tbody = document.getElementById('comptes-tbody');
+  if (!tbody) return;
+
+  if (!_users.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="zone-vide">Aucun compte trouvé.</td></tr>';
+    return;
+  }
+
+  const sessionCourante = Auth.getSession();
+
+  tbody.innerHTML = _users.map(u => {
+    const estMoi   = (u.id === sessionCourante?.id);
+    const estAdmin = (u.profil === 'administration');
+
+    const labelProfil = {
+      consultation:   'Consultation',
+      gestion:        'Gestion',
+      administration: 'Administration',
+    };
+
+    const profilHtml = `<span class="profil-label profil-${u.profil}">
+      ${labelProfil[u.profil] || u.profil}
+    </span>`;
+
+    const statutHtml = u.actif
+      ? '<span class="statut-actif">● Actif</span>'
+      : '<span class="statut-inactif">○ Désactivé</span>';
+
+    // Bouton supprimer désactivé pour son propre compte
+    const btnSup = estMoi
+      ? `<button class="btn-ligne bl-supprimer" disabled title="Impossible de supprimer son propre compte">Supprimer</button>`
+      : `<button class="btn-ligne bl-supprimer" onclick="ouvrirSuppression('${_esc(u.id)}','${_esc(u.nomComplet)}')">Supprimer</button>`;
+
+    return `<tr>
+      <td><strong>${_esc(u.identifiant)}</strong>${estMoi ? ' <span style="color:#aaa;font-size:10px">(vous)</span>' : ''}</td>
+      <td>${_esc(u.nomComplet)}</td>
+      <td>${profilHtml}</td>
+      <td>${statutHtml}</td>
+      <td>
+        <button class="btn-ligne bl-modifier" onclick="ouvrirModification('${_esc(u.id)}')">Modifier</button>
+        <button class="btn-ligne bl-mdp" onclick="ouvrirChangeMdp('${_esc(u.id)}','${_esc(u.nomComplet)}')">🔑 MDP</button>
+        ${btnSup}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ============================================================
+   MODALE CRÉATION
+   ============================================================ */
+
+function ouvrirCreation() {
+  _editId = null;
+  document.getElementById('m-compte-titre').textContent = 'Nouveau compte';
+  document.getElementById('mc-identifiant').value = '';
+  document.getElementById('mc-nom').value         = '';
+  document.getElementById('mc-profil').value      = 'consultation';
+  document.getElementById('mc-mdp').value         = '';
+  document.getElementById('mc-mdp2').value        = '';
+  document.getElementById('mc-actif').value       = 'true';
+  document.getElementById('mc-mdp-zone').style.display  = '';
+  document.getElementById('mc-mdp2-zone').style.display = '';
+  document.getElementById('m-compte-info').style.display = 'none';
+  _cacherErreur('mc-erreur');
+  ouvrirM('m-compte');
+  document.getElementById('mc-identifiant').focus();
+}
+
+/* ============================================================
+   MODALE MODIFICATION
+   ============================================================ */
+
+function ouvrirModification(id) {
+  const u = _users.find(u => u.id === id);
+  if (!u) return;
+
+  _editId = id;
+  document.getElementById('m-compte-titre').textContent = 'Modifier le compte';
+  document.getElementById('mc-identifiant').value = u.identifiant;
+  document.getElementById('mc-nom').value         = u.nomComplet;
+  document.getElementById('mc-profil').value      = u.profil;
+  document.getElementById('mc-actif').value       = String(u.actif);
+
+  // Pas de champs MDP en modification (utiliser modale dédiée)
+  document.getElementById('mc-mdp-zone').style.display  = 'none';
+  document.getElementById('mc-mdp2-zone').style.display = 'none';
+
+  const info = document.getElementById('m-compte-info');
+  info.textContent = 'Pour changer le mot de passe, utilisez le bouton 🔑 MDP dans la liste.';
+  info.style.display = 'block';
+
+  _cacherErreur('mc-erreur');
+  ouvrirM('m-compte');
+}
+
+/* ============================================================
+   SAUVEGARDE COMPTE (création + modification)
+   ============================================================ */
+
+async function sauvegarderCompte() {
+  const identifiant = document.getElementById('mc-identifiant').value.trim();
+  const nomComplet  = document.getElementById('mc-nom').value.trim();
+  const profil      = document.getElementById('mc-profil').value;
+  const actif       = document.getElementById('mc-actif').value === 'true';
+  const mdp1        = document.getElementById('mc-mdp').value;
+  const mdp2        = document.getElementById('mc-mdp2').value;
+
+  // Validations
+  if (!identifiant || !nomComplet) {
+    afficherErreurModale('mc-erreur', 'Identifiant et nom complet sont obligatoires.');
+    return;
+  }
+
+  // En création, vérifier unicité identifiant
+  if (!_editId) {
+    const doublon = _users.find(u => u.identifiant.toLowerCase() === identifiant.toLowerCase());
+    if (doublon) {
+      afficherErreurModale('mc-erreur', 'Cet identifiant est déjà utilisé.');
+      return;
+    }
+    if (!mdp1) {
+      afficherErreurModale('mc-erreur', 'Un mot de passe est requis pour créer un compte.');
+      return;
+    }
+    if (mdp1 !== mdp2) {
+      afficherErreurModale('mc-erreur', 'Les mots de passe ne correspondent pas.');
+      return;
+    }
+  }
+
+  // Construire l'objet
+  let user;
+  if (_editId) {
+    // Modification — conserver le MDP existant
+    user = { ..._users.find(u => u.id === _editId) };
+    user.identifiant = identifiant;
+    user.nomComplet  = nomComplet;
+    user.profil      = profil;
+    user.actif       = actif;
+  } else {
+    // Création — hacher le mot de passe
+    const hashMdp = await sha256(mdp1);
+    user = {
+      id:          _genIdUser(),
+      identifiant: identifiant,
+      nomComplet:  nomComplet,
+      profil:      profil,
+      motDePasse:  hashMdp,
+      actif:       actif,
+    };
+  }
+
+  _persisterUser(user);
+  _rendreTableau();
+  fermerM('m-compte');
+  afficherNotif(_editId ? 'Compte modifié.' : 'Compte créé avec succès.', 'succes');
+}
+
+/* ============================================================
+   MODALE CHANGEMENT MOT DE PASSE
+   ============================================================ */
+
+function ouvrirChangeMdp(id, nom) {
+  _editId = id;
+  document.getElementById('mdp-nom-compte').textContent = nom;
+  document.getElementById('mdp-nouveau').value  = '';
+  document.getElementById('mdp-confirme').value = '';
+  _cacherErreur('mdp-erreur');
+  ouvrirM('m-mdp');
+  document.getElementById('mdp-nouveau').focus();
+}
+
+async function sauvegarderMdp() {
+  const mdp1 = document.getElementById('mdp-nouveau').value;
+  const mdp2 = document.getElementById('mdp-confirme').value;
+
+  if (!mdp1) {
+    afficherErreurModale('mdp-erreur', 'Le nouveau mot de passe est obligatoire.');
+    return;
+  }
+  if (mdp1 !== mdp2) {
+    afficherErreurModale('mdp-erreur', 'Les mots de passe ne correspondent pas.');
+    return;
+  }
+  if (mdp1.length < 6) {
+    afficherErreurModale('mdp-erreur', 'Le mot de passe doit contenir au moins 6 caractères.');
+    return;
+  }
+
+  const user = _users.find(u => u.id === _editId);
+  if (!user) return;
+
+  const hashMdp = await sha256(mdp1);
+  const userMaj = { ...user, motDePasse: hashMdp };
+  _persisterUser(userMaj);
+
+  fermerM('m-mdp');
+  afficherNotif('Mot de passe mis à jour.', 'succes');
+}
+
+/* ============================================================
+   SUPPRESSION
+   ============================================================ */
+
+function ouvrirSuppression(id, nom) {
+  _supId = id;
+  document.getElementById('sup-nom-compte').textContent = nom;
+  ouvrirM('m-supprimer');
+}
+
+function confirmerSuppression() {
+  if (!_supId) return;
+
+  // Marquer comme supprimé dans localStorage
+  const user = _users.find(u => u.id === _supId);
+  if (user) {
+    const userSup = { ...user, _supprime: true };
+    const local = _chargerLocal();
+    const idx = local.findIndex(u => u.id === _supId);
+    if (idx !== -1) {
+      local[idx] = userSup;
+    } else {
+      local.push(userSup);
+    }
+    localStorage.setItem(CLE_USERS, JSON.stringify(local));
+  }
+
+  // Retirer de l'état en mémoire
+  _users = _users.filter(u => u.id !== _supId);
+  _supId = null;
+
+  _rendreTableau();
+  fermerM('m-supprimer');
+  afficherNotif('Compte supprimé.', 'succes');
+}
+
+/* ============================================================
+   UTILITAIRES CRYPTO
+   ============================================================ */
+
+/**
+ * Calcule le hash SHA-256 d'une chaîne via l'API Web Crypto native.
+ * @param {string} texte
+ * @returns {Promise<string>} hex
+ */
+async function sha256(texte) {
+  const buf = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(texte)
+  );
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/* ============================================================
+   UTILITAIRES UI
+   ============================================================ */
+
+function ouvrirM(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function fermerM(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function bgClose(e, id) {
+  if (e.target === document.getElementById(id)) fermerM(id);
+}
+
+function toggleMdp(inputId, btnId) {
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  const visible = inp.type === 'text';
+  inp.type = visible ? 'password' : 'text';
+  btn.textContent = visible ? '👁' : '🙈';
+}
+
+function afficherErreurModale(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function _cacherErreur(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('visible');
+}
+
+/**
+ * Notification temporaire en bas à droite.
+ * @param {string} msg
+ * @param {'succes'|'erreur'} type
+ */
+function afficherNotif(msg, type) {
+  const el = document.getElementById('notif');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `notif-${type}`;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+/**
+ * Échappe les caractères HTML pour éviter les injections.
+ * @param {string} str
+ * @returns {string}
+ */
+function _esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ============================================================
+   DÉMARRAGE
+   ============================================================ */
+chargerUsers();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock — Le Bras Frères Métallerie</title>
+  <style>
+    /* ============================================================
+       VARIABLES ET RESET
+       ============================================================ */
+    :root {
+      --rouge:      rgb(210, 35, 42);
+      --noir:       rgb(30, 30, 35);
+      --vert:       rgb(45, 95, 50);
+      --or:         #856404;
+      --or-bg:      #fff3cd;
+      --or-bord:    #e0a800;
+      --gris-bg:    #f0f0f0;
+      --gris-clair: #e4e4e4;
+      --gris-bord:  #c4c4c4;
+      --blanc:      #ffffff;
+      --bleu-info:  #1a56c4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Tahoma, Geneva, sans-serif;
+      background: var(--gris-bg);
+      color: var(--noir);
+      font-size: 13px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      background: var(--noir);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 54px;
+      border-bottom: 3px solid var(--rouge);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-zone { display: flex; align-items: center; gap: 10px; }
+    .logo-zone img { height: 36px; filter: brightness(10); }
+
+    .app-title {
+      font-family: Impact, Haettenschweiler, sans-serif;
+      color: white;
+      font-size: 18px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .app-title span { color: var(--rouge); }
+
+    .header-droite { display: flex; align-items: center; gap: 10px; }
+
+    .badge-profil {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 2px;
+      font-family: Impact, sans-serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .badge-consultation   { background: var(--rouge); color: white; }
+    .badge-gestion        { background: var(--vert);  color: white; }
+    .badge-administration { background: var(--or);    color: white; }
+
+    #header-user { color: #aaa; font-size: 12px; }
+
+    .btn-deco {
+      background: none;
+      border: 1px solid #555;
+      color: #aaa;
+      padding: 4px 9px;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 2px;
+      font-family: Tahoma;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-deco:hover { border-color: #888; color: #ccc; }
+
+    /* ── NAVIGATION ──────────────────────────────────────────── */
+    .nav-principale {
+      background: var(--blanc);
+      border-bottom: 2px solid var(--gris-clair);
+      display: flex;
+      padding: 0 20px;
+      align-items: center;
+    }
+
+    .nav-item {
+      padding: 10px 18px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-family: Tahoma;
+      font-size: 13px;
+      font-weight: bold;
+      color: #777;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .nav-item:hover { color: #444; }
+    .nav-item.actif { color: var(--rouge); border-bottom-color: var(--rouge); }
+    .nav-item-droite { margin-left: auto; color: var(--or) !important; }
+    .nav-item-droite:hover { color: #a07800 !important; }
+
+    /* ── NOTIFICATION ────────────────────────────────────────── */
+    .notif {
+      position: fixed;
+      top: 62px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-12px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 9px 18px;
+      border-radius: 3px;
+      font-size: 13px;
+      font-weight: bold;
+      z-index: 999;
+      transition: opacity .25s, transform .25s;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    }
+    .notif-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .notif-succes  { background: var(--vert);      color: white; }
+    .notif-erreur  { background: var(--rouge);     color: white; }
+    .notif-info    { background: var(--bleu-info); color: white; }
+
+    /* ── ALERTE ADMIN ─────────────────────────────────────────── */
+    .alerte-attente {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--or-bg);
+      border-bottom: 1px solid var(--or-bord);
+      padding: 7px 20px;
+      font-size: 13px;
+      color: var(--or);
+      font-weight: bold;
+    }
+    .alerte-nb {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--or);
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 12px;
+    }
+
+    /* ── SOUS-ONGLETS ─────────────────────────────────────────── */
+    .sous-onglets {
+      background: #f8f8f8;
+      border-bottom: 1px solid var(--gris-clair);
+      display: flex;
+      padding: 0 20px;
+    }
+
+    .sous-onglet {
+      padding: 7px 14px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      font-family: Tahoma;
+      font-size: 12px;
+      font-weight: bold;
+      color: #888;
+      cursor: pointer;
+      transition: color .15s;
+    }
+    .sous-onglet:hover { color: #555; }
+    .sous-onglet.actif { color: var(--vert); border-bottom-color: var(--vert); }
+
+    /* ── TOOLBAR ──────────────────────────────────────────────── */
+    .toolbar {
+      background: white;
+      padding: 9px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--gris-clair);
+    }
+
+    .toolbar-label {
+      font-size: 11px;
+      color: #999;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+
+    .toolbar-sep { flex: 1; min-width: 8px; }
+
+    .btn-action {
+      padding: 7px 13px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: Tahoma;
+      font-size: 13px;
+      font-weight: bold;
+      transition: opacity .15s;
+    }
+    .btn-action:hover { opacity: .85; }
+    .btn-rouge { background: var(--rouge); color: white; }
+    .btn-gris  { background: #e0e0e0;      color: var(--noir); }
+
+    .sel-filtre {
+      padding: 6px 8px;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      font-size: 12px;
+      font-family: Tahoma;
+      background: white;
+      color: var(--noir);
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .sel-filtre:focus { outline: none; border-color: var(--rouge); }
+
+    .input-recherche {
+      padding: 6px 10px;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      font-size: 13px;
+      font-family: Tahoma;
+      width: 200px;
+      transition: border-color .15s;
+    }
+    .input-recherche:focus { outline: none; border-color: var(--rouge); }
+
+    /* ── TABLEAU ──────────────────────────────────────────────── */
+    .zone-tableau { padding: 14px 20px; overflow-x: auto; }
+
+    #tableau-stock table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid var(--gris-clair);
+      font-size: 13px;
+    }
+
+    #tableau-stock thead th {
+      background: var(--noir);
+      color: white;
+      font-family: Impact, sans-serif;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 9px 10px;
+      text-align: left;
+      white-space: nowrap;
+      user-select: none;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    #tableau-stock thead th:hover    { background: #3a3a42; }
+    #tableau-stock thead th.tri-actif { background: #111116; }
+
+    .tri-ind { font-size: 10px; color: rgba(255,255,255,.5); margin-left: 3px; }
+
+    #tableau-stock tbody tr             { border-bottom: 1px solid #eaeaea; transition: background .1s; }
+    #tableau-stock tbody tr:hover       { background: #fafafa; }
+    #tableau-stock tbody tr.ligne-attente       { background: var(--or-bg) !important; }
+    #tableau-stock tbody tr.ligne-attente:hover { background: #ffeebb !important; }
+    #tableau-stock tbody td             { padding: 8px 10px; vertical-align: middle; }
+
+    .vide {
+      text-align: center; color: #aaa;
+      padding: 30px !important; font-style: italic;
+    }
+
+    .erreur-chargement {
+      background: #fde8e8;
+      border: 1px solid var(--rouge);
+      border-radius: 3px;
+      padding: 16px 20px;
+      color: var(--rouge);
+      line-height: 1.7;
+      margin: 14px 0;
+    }
+
+    /* ── BADGES ───────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 2px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .badge-dispo   { background: #e6f4ea; color: var(--vert);  border: 1px solid var(--vert);  }
+    .badge-affecte { background: #fde8e8; color: var(--rouge); border: 1px solid var(--rouge); }
+    .badge-attente { background: var(--or-bg); color: var(--or); border: 1px solid var(--or-bord); }
+
+    .chip-chantier {
+      display: inline-block;
+      background: #fde8e8;
+      color: var(--rouge);
+      border: 1px solid #f8b4b4;
+      border-radius: 2px;
+      padding: 1px 5px;
+      font-size: 10px;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+
+    /* ── BOUTONS LIGNE ────────────────────────────────────────── */
+    .td-actions { white-space: nowrap; }
+
+    .btn-ligne {
+      padding: 4px 7px;
+      font-size: 11px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: Tahoma;
+      margin-right: 2px;
+      font-weight: bold;
+      transition: opacity .15s;
+    }
+    .btn-ligne:hover    { opacity: .82; }
+    .btn-ligne:disabled { opacity: .35; cursor: not-allowed; }
+
+    .btn-detail   { background: #e8e8e8;      color: var(--noir); }
+    .btn-modifier { background: var(--vert);  color: white; }
+    .btn-demander { background: var(--rouge); color: white; }
+    .btn-valider  { background: #198754;      color: white; }
+    .btn-refuser  { background: #6c757d;      color: white; }
+
+    /* ── PIED ─────────────────────────────────────────────────── */
+    .pied-tableau { padding: 8px 0 2px; color: #888; font-size: 12px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       MODALES — STYLES COMMUNS
+       ══════════════════════════════════════════════════════════════ */
+    .modale-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      padding: 16px;
+    }
+    .modale-bg.open { display: flex; }
+
+    .modale {
+      background: white;
+      border-top: 4px solid var(--rouge);
+      border-radius: 4px;
+      width: 540px;
+      max-width: 98vw;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 22px 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    }
+    .modale-lg { width: 680px; }
+    .modale-xl { width: 820px; }
+
+    .modale-titre {
+      font-family: Impact, sans-serif;
+      font-size: 17px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      color: var(--noir);
+    }
+
+    .modale-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--gris-clair);
+    }
+
+    /* Formulaires dans les modales */
+    .fr {
+      margin-bottom: 10px;
+    }
+    .fr label {
+      display: block;
+      font-size: 11px;
+      font-weight: bold;
+      color: #666;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .fr input, .fr select, .fr textarea {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      font-family: Tahoma;
+      font-size: 13px;
+      color: var(--noir);
+      background: white;
+      transition: border-color .15s;
+    }
+    .fr input:focus, .fr select:focus, .fr textarea:focus {
+      outline: none;
+      border-color: var(--rouge);
+    }
+    .fr textarea { resize: vertical; min-height: 60px; }
+
+    .form-cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    /* Boutons de la modale */
+    .btn-modale {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: Tahoma;
+      font-size: 13px;
+      font-weight: bold;
+      transition: opacity .15s;
+    }
+    .btn-modale:hover { opacity: .85; }
+    .btn-modale-rouge { background: var(--rouge); color: white; }
+    .btn-modale-gris  { background: #e0e0e0;      color: var(--noir); }
+    .btn-modale-vert  { background: var(--vert);  color: white; }
+
+    /* Note de statut (en_attente ou direct) */
+    .note-statut {
+      padding: 8px 12px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin: 10px 0;
+    }
+    .note-statut-attente {
+      background: var(--or-bg);
+      border: 1px solid var(--or-bord);
+      color: var(--or);
+    }
+    .note-statut-direct {
+      background: #e6f4ea;
+      border: 1px solid var(--vert);
+      color: var(--vert);
+    }
+
+    /* Zone schéma SVG */
+    .schema-zone {
+      background: #f7f7f7;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      padding: 14px;
+      margin: 12px 0;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .schema-svg-zone { flex: 0 0 auto; }
+    .schema-titre {
+      font-family: Impact, sans-serif;
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: var(--rouge);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .schema-dims { flex: 1; }
+    .schema-dims h4 {
+      font-family: Impact, sans-serif;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--noir);
+      margin-bottom: 8px;
+    }
+    .dim-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 12px;
+    }
+    .dim-label { color: #666; }
+    .dim-val   { font-weight: bold; }
+
+    /* Résumé barre dans modale demande */
+    .resume-barre {
+      background: #f4f4f4;
+      padding: 10px 12px;
+      border-radius: 3px;
+      margin-bottom: 14px;
+      border-left: 3px solid var(--rouge);
+      font-size: 13px;
+    }
+
+    /* Aperçu tôle */
+    .apercu-tole {
+      background: #f7f7f7;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      padding: 10px 14px;
+      margin: 10px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 20px;
+    }
+    .apercu-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 3px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .apercu-label { color: #666; }
+    .apercu-val   { font-weight: bold; }
+
+    /* Fiche détail tôle — grille infos */
+    .fiche-infos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--gris-clair);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .fiche-info-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--gris-clair);
+    }
+    .fiche-info-item:nth-child(odd) { border-right: 1px solid var(--gris-clair); }
+    .fiche-info-label {
+      font-size: 10px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 2px;
+    }
+    .fiche-info-val { font-size: 13px; font-weight: bold; }
+
+    /* Séparateur section */
+    .section-sep {
+      font-family: Impact, sans-serif;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin: 14px 0 6px;
+    }
+
+    /* Poids calculé inline */
+    .poids-calc-zone {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 12px;
+      color: #888;
+    }
+    .poids-calc-val { font-weight: bold; font-size: 14px; }
+
+
+    /* ── STYLES MODALES VALIDATION (Conv. 6) ─────────────────── */
+
+    /* Bouton vert validation */
+    .btn-modale-valider {
+      background: #198754;
+      color: white;
+    }
+
+    /* Récapitulatif dans les modales de validation */
+    .recap-validation {
+      background: #f7f7f7;
+      border: 1px solid var(--gris-bord);
+      border-radius: 3px;
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+
+    /* Alerte confirmation refus */
+    .alerte-refus {
+      background: #fde8e8;
+      border: 1px solid var(--rouge);
+      border-radius: 3px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--rouge);
+      margin-bottom: 12px;
+    }
+
+    /* Zone motif refus */
+    .zone-motif {
+      margin-top: 10px;
+    }
+    /* ── RESPONSIVE ───────────────────────────────────────────── */
+    @media (max-width: 900px) { .input-recherche { width: 150px; } }
+
+    @media (max-width: 768px) {
+      header { padding: 0 12px; height: 48px; }
+      .app-title { font-size: 14px; }
+      .logo-zone img { height: 28px; }
+      #header-user { display: none; }
+      .nav-principale { padding: 0 8px; }
+      .nav-item { padding: 8px 10px; font-size: 12px; }
+      .sous-onglets { padding: 0 8px; }
+      .toolbar { padding: 8px 12px; gap: 6px; }
+      .zone-tableau { padding: 8px 0; }
+      #tableau-stock table { font-size: 12px; }
+      #tableau-stock thead th { padding: 7px 8px; font-size: 11px; }
+      #tableau-stock tbody td { padding: 6px 8px; }
+      .input-recherche { width: 100%; }
+      .sel-filtre { font-size: 11px; padding: 5px 6px; }
+      .form-cols2, .form-cols3 { grid-template-columns: 1fr; }
+      .modale { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Notification temporaire -->
+  <div id="stock-notif" class="notif" role="alert" aria-live="polite"></div>
+
+  <!-- ── HEADER ──────────────────────────────────────────────── -->
+  <header>
+    <div class="logo-zone">
+      <img src="../assets/Logo_LBF.png" alt="Le Bras Frères">
+      <div class="app-title">Stock <span>Métallerie</span></div>
+    </div>
+    <div class="header-droite">
+      <span id="header-badge" class="badge-profil"></span>
+      <span id="header-user"></span>
+      <button class="btn-deco" onclick="Auth.logout()">Déconnexion</button>
+    </div>
+  </header>
+
+  <!-- ── NAVIGATION ──────────────────────────────────────────── -->
+  <nav class="nav-principale">
+    <a class="nav-item actif" href="stock.html">
+      <span>📦</span> Stock
+    </a>
+    <a class="nav-item" href="bibliotheque.html">
+      <span>📚</span> Bibliothèque
+    </a>
+    <a class="nav-item nav-item-droite" href="comptes.html" data-require="can_manage_users">
+      <span>⚙</span> Comptes
+    </a>
+  </nav>
+
+  <!-- Alerte admin : éléments en attente -->
+  <div id="stock-alerte-attente" class="alerte-attente" role="alert">
+    ⚠&nbsp; <span class="alerte-nb">0</span>&nbsp; élément(s) en attente de validation
+  </div>
+
+  <!-- ── SOUS-ONGLETS ─────────────────────────────────────────── -->
+  <div class="sous-onglets">
+    <button class="sous-onglet actif" data-onglet="profils">Profilés</button>
+    <button class="sous-onglet"       data-onglet="toles">Tôles</button>
+  </div>
+
+  <!-- ── TOOLBAR PROFILÉS ─────────────────────────────────────── -->
+  <div class="toolbar" id="toolbar-profils">
+    <button id="btn-ajout-profil" class="btn-action btn-rouge" data-require="can_add">+ Profilé</button>
+    <button id="btn-ajout-tole"   class="btn-action btn-gris"  data-require="can_add">+ Tôle</button>
+
+    <span class="toolbar-label" style="margin-left:4px">Filtrer :</span>
+
+    <select id="p-type"     class="sel-filtre" title="Type de section">
+      <option value="">Tous types</option>
+    </select>
+    <select id="p-desig"    class="sel-filtre" title="Désignation">
+      <option value="">Toutes désignations</option>
+    </select>
+    <select id="p-chantier" class="sel-filtre" title="Chantier d'origine">
+      <option value="">Tous chantiers</option>
+    </select>
+    <select id="p-lieu"     class="sel-filtre" title="Lieu de stockage">
+      <option value="">Tous lieux</option>
+    </select>
+    <select id="p-dispo"    class="sel-filtre" title="Disponibilité">
+      <option value="">Disponibilité</option>
+      <option value="disponible">Disponible</option>
+      <option value="affecte">Affecté</option>
+    </select>
+
+    <div class="toolbar-sep"></div>
+    <button id="btn-reset-profils" class="btn-action btn-gris" title="Réinitialiser les filtres">✕ Réinitialiser</button>
+    <input id="p-recherche" class="input-recherche" type="text" placeholder="🔍 Rechercher…" autocomplete="off">
+  </div>
+
+  <!-- ── TOOLBAR TÔLES ────────────────────────────────────────── -->
+  <div class="toolbar" id="toolbar-toles" style="display:none">
+    <button id="btn-ajout-tole-tab" class="btn-action btn-gris" data-require="can_add">+ Tôle</button>
+
+    <span class="toolbar-label" style="margin-left:4px">Filtrer :</span>
+
+    <select id="t-epaisseur" class="sel-filtre" title="Épaisseur">
+      <option value="">Toutes épaisseurs</option>
+    </select>
+    <select id="t-chantier"  class="sel-filtre" title="Chantier d'origine">
+      <option value="">Tous chantiers</option>
+    </select>
+    <select id="t-lieu"      class="sel-filtre" title="Lieu de stockage">
+      <option value="">Tous lieux</option>
+    </select>
+    <select id="t-dispo"     class="sel-filtre" title="Disponibilité">
+      <option value="">Disponibilité</option>
+      <option value="disponible">Disponible</option>
+      <option value="affecte">Affecté</option>
+    </select>
+
+    <div class="toolbar-sep"></div>
+    <button id="btn-reset-toles" class="btn-action btn-gris" title="Réinitialiser">✕ Réinitialiser</button>
+    <input id="t-recherche" class="input-recherche" type="text" placeholder="🔍 Rechercher…" autocomplete="off">
+  </div>
+
+  <!-- ── TABLEAU PRINCIPAL ─────────────────────────────────────── -->
+  <div class="zone-tableau">
+    <div id="tableau-stock">
+      <div style="padding:30px; text-align:center; color:#aaa; font-style:italic;">
+        Chargement du stock…
+      </div>
+    </div>
+    <div class="pied-tableau">
+      <span id="stock-compteur"></span>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 1 — AJOUT PROFILÉ
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-ajout-profil" class="modale-bg" role="dialog" aria-modal="true" aria-label="Ajouter un profilé">
+    <div class="modale modale-lg">
+      <div class="modale-titre">Ajouter un profilé au stock</div>
+
+      <div class="form-cols2">
+        <div class="fr">
+          <label>Type de section <span style="color:var(--rouge)">*</span></label>
+          <select id="ap-type">
+            <option value="">— Choisir —</option>
+          </select>
+        </div>
+        <div class="fr">
+          <label>Désignation <span style="color:var(--rouge)">*</span></label>
+          <select id="ap-desig">
+            <option value="">— Choisir le type d'abord —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Schéma SVG + dimensions (affiché après sélection désignation) -->
+      <div id="ap-schema" class="schema-zone" style="display:none">
+        <div class="schema-svg-zone">
+          <div class="schema-titre" id="ap-schema-label">—</div>
+          <svg id="ap-svg" width="160" height="160" viewBox="0 0 160 160"></svg>
+        </div>
+        <div class="schema-dims">
+          <h4>Caractéristiques</h4>
+          <div id="ap-dims-list">
+            <div style="color:#aaa;font-size:12px">Sélectionnez une désignation</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-cols2">
+        <div class="fr">
+          <label>Longueur (m) <span style="color:var(--rouge)">*</span></label>
+          <input type="number" id="ap-longueur" placeholder="ex : 6.00" step="0.01" min="0.1">
+          <div class="poids-calc-zone">
+            Poids estimé :&nbsp;<span class="poids-calc-val" id="ap-poids-calc">—</span>
+          </div>
+        </div>
+        <div class="fr">
+          <label>Chantier d'origine</label>
+          <input type="text" id="ap-chantier" placeholder="Nom ou référence du chantier">
+        </div>
+      </div>
+
+      <div class="form-cols2">
+        <div class="fr">
+          <label>Lieu de stockage</label>
+          <select id="ap-lieu">
+            <option value="">— Choisir —</option>
+          </select>
+        </div>
+        <div class="fr">
+          <label>Disponibilité</label>
+          <select id="ap-dispo">
+            <option value="disponible">Disponible</option>
+            <option value="affecte">Affecté à un chantier</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="fr">
+        <label>Commentaire</label>
+        <textarea id="ap-commentaire" placeholder="Informations complémentaires (état, provenance…)"></textarea>
+      </div>
+
+      <!-- Note : statut selon profil (injecté par JS) -->
+      <div class="ap-note-statut note-statut note-statut-attente"></div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-ajout-profil').classList.remove('open')">Annuler</button>
+        <button class="btn-modale btn-modale-rouge btn-soumettre">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 2 — AJOUT TÔLE
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-ajout-tole" class="modale-bg" role="dialog" aria-modal="true" aria-label="Ajouter une tôle">
+    <div class="modale modale-lg">
+      <div class="modale-titre">Ajouter une tôle au stock</div>
+
+      <!-- Schéma tôle en perspective (repris du mockup) -->
+      <div class="schema-zone">
+        <div class="schema-svg-zone">
+          <div class="schema-titre">Tôle plate</div>
+          <svg width="155" height="115" viewBox="0 0 155 115">
+            <polygon points="28,42 118,42 118,60 28,60" fill="#d0d8e0" stroke="#555" stroke-width="1.5"/>
+            <polygon points="118,42 138,27 138,45 118,60" fill="#b0bbc8" stroke="#555" stroke-width="1.5"/>
+            <polygon points="28,42 48,27 138,27 118,42" fill="#c8d4de" stroke="#555" stroke-width="1.5"/>
+            <!-- Cote épaisseur -->
+            <line x1="122" y1="42" x2="144" y2="42" stroke="#d22323" stroke-width="1" stroke-dasharray="3,2"/>
+            <line x1="122" y1="60" x2="144" y2="60" stroke="#d22323" stroke-width="1" stroke-dasharray="3,2"/>
+            <line x1="142" y1="42" x2="142" y2="60" stroke="#d22323" stroke-width="1.5"/>
+            <text x="149" y="53" font-size="9" fill="#d22323" font-family="Tahoma">e</text>
+            <!-- Cote largeur -->
+            <line x1="28" y1="67" x2="118" y2="67" stroke="#d22323" stroke-width="1.5"/>
+            <line x1="28" y1="63" x2="28"  y2="71" stroke="#d22323" stroke-width="1"/>
+            <line x1="118" y1="63" x2="118" y2="71" stroke="#d22323" stroke-width="1"/>
+            <text x="73" y="79" font-size="9" fill="#d22323" font-family="Tahoma" text-anchor="middle">Largeur</text>
+            <!-- Cote longueur -->
+            <text x="88" y="38" font-size="9" fill="#d22323" font-family="Tahoma" text-anchor="middle">Longueur →</text>
+          </svg>
+        </div>
+        <!-- Aperçu en temps réel -->
+        <div class="schema-dims">
+          <h4>Aperçu de la saisie</h4>
+          <div class="dim-row"><span class="dim-label">e — Épaisseur</span><span class="dim-val" id="at-aff-ep">—</span></div>
+          <div class="dim-row"><span class="dim-label">Largeur</span><span class="dim-val" id="at-aff-lrg">—</span></div>
+          <div class="dim-row"><span class="dim-label">Longueur</span><span class="dim-val" id="at-aff-lng">—</span></div>
+          <div class="dim-row"><span class="dim-label">Quantité</span><span class="dim-val" id="at-aff-qty">—</span></div>
+          <div class="dim-row"><span class="dim-label">Poids unitaire</span><span class="dim-val" id="at-aff-poids" style="color:#aaa">—</span></div>
+          <div class="dim-row"><span class="dim-label">Poids total</span><span class="dim-val" id="at-aff-total" style="color:#aaa">—</span></div>
+        </div>
+      </div>
+
+      <div class="form-cols3">
+        <div class="fr">
+          <label>Épaisseur (mm) <span style="color:var(--rouge)">*</span></label>
+          <input type="number" id="at-epaisseur" placeholder="10" min="1" step="0.5">
+        </div>
+        <div class="fr">
+          <label>Largeur (mm) <span style="color:var(--rouge)">*</span></label>
+          <input type="number" id="at-largeur" placeholder="1000" min="1">
+        </div>
+        <div class="fr">
+          <label>Longueur (mm) <span style="color:var(--rouge)">*</span></label>
+          <input type="number" id="at-longueur" placeholder="2000" min="1">
+        </div>
+      </div>
+
+      <div class="form-cols3">
+        <div class="fr">
+          <label>Quantité</label>
+          <input type="number" id="at-quantite" placeholder="1" min="1" value="1">
+        </div>
+        <div class="fr">
+          <label>Chantier d'origine</label>
+          <input type="text" id="at-chantier" placeholder="Référence chantier">
+        </div>
+        <div class="fr">
+          <label>Lieu de stockage</label>
+          <select id="at-lieu">
+            <option value="">— Choisir —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-cols2">
+        <div class="fr">
+          <label>Disponibilité</label>
+          <select id="at-dispo">
+            <option value="disponible">Disponible</option>
+            <option value="affecte">Affecté à un chantier</option>
+          </select>
+        </div>
+        <div class="fr">
+          <label>Commentaire</label>
+          <textarea id="at-commentaire" placeholder="Précisions…" style="min-height:40px"></textarea>
+        </div>
+      </div>
+
+      <div class="at-note-statut note-statut note-statut-attente"></div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-ajout-tole').classList.remove('open')">Annuler</button>
+        <button class="btn-modale btn-modale-rouge btn-soumettre">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 3 — MODIFICATION (profilé ou tôle)
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-modification" class="modale-bg" role="dialog" aria-modal="true" aria-label="Modifier un élément">
+    <div class="modale modale-lg">
+      <div class="modale-titre">Modifier</div>
+
+      <!-- Zone profilé (affichée par défaut) -->
+      <div class="mod-zone-profil">
+        <div class="form-cols2">
+          <div class="fr">
+            <label>Type de section <span style="color:var(--rouge)">*</span></label>
+            <select id="mod-type"><option value="">— Choisir —</option></select>
+          </div>
+          <div class="fr">
+            <label>Désignation <span style="color:var(--rouge)">*</span></label>
+            <select id="mod-desig"><option value="">— Choisir le type d'abord —</option></select>
+          </div>
+        </div>
+
+        <!-- Schéma SVG dynamique -->
+        <div id="mod-schema" class="schema-zone" style="display:none">
+          <div class="schema-svg-zone">
+            <div class="schema-titre" id="mod-schema-label">—</div>
+            <svg id="mod-svg" width="160" height="160" viewBox="0 0 160 160"></svg>
+          </div>
+          <div class="schema-dims">
+            <h4>Caractéristiques</h4>
+            <div id="mod-dims-list"></div>
+          </div>
+        </div>
+
+        <div class="form-cols2">
+          <div class="fr">
+            <label>Longueur (m) <span style="color:var(--rouge)">*</span></label>
+            <input type="number" id="mod-longueur" placeholder="6.00" step="0.01" min="0.1">
+            <div class="poids-calc-zone">
+              Poids estimé :&nbsp;<span class="poids-calc-val" id="mod-poids-calc">—</span>
+            </div>
+          </div>
+          <div class="fr">
+            <label>Chantier d'origine</label>
+            <input type="text" id="mod-chantier" placeholder="Référence chantier">
+          </div>
+        </div>
+
+        <div class="form-cols2">
+          <div class="fr">
+            <label>Lieu de stockage</label>
+            <select id="mod-lieu"><option value="">— Choisir —</option></select>
+          </div>
+          <div class="fr">
+            <label>Disponibilité</label>
+            <select id="mod-dispo">
+              <option value="disponible">Disponible</option>
+              <option value="affecte">Affecté à un chantier</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="fr">
+          <label>Chantier d'affectation</label>
+          <input type="text" id="mod-affectation" placeholder="Renseignez si la barre est affectée">
+        </div>
+
+        <div class="fr">
+          <label>Commentaire</label>
+          <textarea id="mod-commentaire" placeholder="Informations complémentaires…"></textarea>
+        </div>
+      </div>
+
+      <!-- Zone tôle (masquée par défaut, affichée si modification d'une tôle) -->
+      <div class="mod-zone-tole" style="display:none">
+        <div class="form-cols3">
+          <div class="fr">
+            <label>Épaisseur (mm) <span style="color:var(--rouge)">*</span></label>
+            <input type="number" id="mod-t-epaisseur" placeholder="10" min="1" step="0.5">
+          </div>
+          <div class="fr">
+            <label>Largeur (mm) <span style="color:var(--rouge)">*</span></label>
+            <input type="number" id="mod-t-largeur" placeholder="1000" min="1">
+          </div>
+          <div class="fr">
+            <label>Longueur (mm) <span style="color:var(--rouge)">*</span></label>
+            <input type="number" id="mod-t-longueur" placeholder="2000" min="1">
+          </div>
+        </div>
+        <div class="form-cols3">
+          <div class="fr">
+            <label>Quantité</label>
+            <input type="number" id="mod-t-quantite" placeholder="1" min="1">
+          </div>
+          <div class="fr">
+            <label>Chantier d'origine</label>
+            <input type="text" id="mod-t-chantier" placeholder="Référence chantier">
+          </div>
+          <div class="fr">
+            <label>Lieu de stockage</label>
+            <select id="mod-t-lieu"><option value="">— Choisir —</option></select>
+          </div>
+        </div>
+        <div class="form-cols2">
+          <div class="fr">
+            <label>Disponibilité</label>
+            <select id="mod-t-dispo">
+              <option value="disponible">Disponible</option>
+              <option value="affecte">Affecté</option>
+            </select>
+          </div>
+          <div class="fr">
+            <label>Commentaire</label>
+            <textarea id="mod-t-commentaire" style="min-height:40px"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="mod-note-statut note-statut note-statut-attente"></div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-modification').classList.remove('open'); document.querySelector('.mod-zone-profil').style.display=''; document.querySelector('.mod-zone-tole').style.display='none'">Annuler</button>
+        <button class="btn-modale btn-modale-vert btn-soumettre">Enregistrer la modification</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 4 — DEMANDE D'ATTRIBUTION
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-demande" class="modale-bg" role="dialog" aria-modal="true" aria-label="Demande d'attribution">
+    <div class="modale">
+      <div class="modale-titre">Demande d'attribution</div>
+
+      <!-- Résumé de la barre concernée (injecté par JS) -->
+      <div id="dem-info-barre" class="resume-barre">—</div>
+
+      <div class="fr">
+        <label>Nom du demandeur <span style="color:var(--rouge)">*</span></label>
+        <input type="text" id="dem-demandeur" placeholder="Prénom Nom">
+      </div>
+
+      <div class="fr">
+        <label>Chantier concerné <span style="color:var(--rouge)">*</span></label>
+        <input type="text" id="dem-chantier" placeholder="Nom ou référence du chantier">
+      </div>
+
+      <div class="fr">
+        <label>Commentaire (optionnel)</label>
+        <textarea id="dem-commentaire" placeholder="Précisions sur l'utilisation, délai souhaité…"></textarea>
+      </div>
+
+      <div class="note-statut note-statut-attente">
+        ⏳ La demande sera transmise à l'administrateur pour validation. Vous recevrez une confirmation.
+      </div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-demande').classList.remove('open')">Annuler</button>
+        <button class="btn-modale btn-modale-rouge btn-soumettre">Envoyer la demande</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 5 — FICHE DÉTAIL TÔLE (lecture seule)
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-detail-tole" class="modale-bg" role="dialog" aria-modal="true" aria-label="Fiche tôle">
+    <div class="modale modale-lg">
+      <div class="modale-titre">Fiche tôle</div>
+
+      <!-- Badge dispo -->
+      <div id="dtole-dispo" style="margin-bottom:12px"></div>
+
+      <!-- Schéma tôle perspective -->
+      <div class="schema-zone">
+        <div class="schema-svg-zone">
+          <div class="schema-titre">Tôle plate</div>
+          <svg width="155" height="115" viewBox="0 0 155 115">
+            <polygon points="28,42 118,42 118,60 28,60" fill="#d0d8e0" stroke="#555" stroke-width="1.5"/>
+            <polygon points="118,42 138,27 138,45 118,60" fill="#b0bbc8" stroke="#555" stroke-width="1.5"/>
+            <polygon points="28,42 48,27 138,27 118,42" fill="#c8d4de" stroke="#555" stroke-width="1.5"/>
+            <line x1="122" y1="42" x2="144" y2="42" stroke="#d22323" stroke-width="1" stroke-dasharray="3,2"/>
+            <line x1="122" y1="60" x2="144" y2="60" stroke="#d22323" stroke-width="1" stroke-dasharray="3,2"/>
+            <line x1="142" y1="42" x2="142" y2="60" stroke="#d22323" stroke-width="1.5"/>
+            <text x="149" y="53" font-size="9" fill="#d22323" font-family="Tahoma">e</text>
+            <line x1="28" y1="67" x2="118" y2="67" stroke="#d22323" stroke-width="1.5"/>
+            <line x1="28" y1="63" x2="28"  y2="71" stroke="#d22323" stroke-width="1"/>
+            <line x1="118" y1="63" x2="118" y2="71" stroke="#d22323" stroke-width="1"/>
+            <text x="73" y="79" font-size="9" fill="#d22323" font-family="Tahoma" text-anchor="middle">Largeur</text>
+            <text x="88" y="38" font-size="9" fill="#d22323" font-family="Tahoma" text-anchor="middle">Longueur →</text>
+          </svg>
+        </div>
+        <div class="schema-dims">
+          <h4>Dimensions</h4>
+          <div class="dim-row"><span class="dim-label">e — Épaisseur</span><span class="dim-val" id="dtole-epaisseur">—</span></div>
+          <div class="dim-row"><span class="dim-label">Largeur</span><span class="dim-val" id="dtole-largeur">—</span></div>
+          <div class="dim-row"><span class="dim-label">Longueur</span><span class="dim-val" id="dtole-longueur">—</span></div>
+          <div class="dim-row"><span class="dim-label">Quantité</span><span class="dim-val" id="dtole-quantite">—</span></div>
+          <div class="dim-row"><span class="dim-label">Poids unitaire</span><span class="dim-val" id="dtole-poids-u">—</span></div>
+          <div class="dim-row"><span class="dim-label">Poids total</span><span class="dim-val" id="dtole-poids-t">—</span></div>
+        </div>
+      </div>
+
+      <!-- Infos complémentaires -->
+      <div class="fiche-infos">
+        <div class="fiche-info-item">
+          <div class="fiche-info-label">Chantier d'origine</div>
+          <div class="fiche-info-val" id="dtole-chantier">—</div>
+        </div>
+        <div class="fiche-info-item">
+          <div class="fiche-info-label">Lieu de stockage</div>
+          <div class="fiche-info-val" id="dtole-lieu">—</div>
+        </div>
+        <div class="fiche-info-item">
+          <div class="fiche-info-label">Date d'ajout</div>
+          <div class="fiche-info-val" id="dtole-date">—</div>
+        </div>
+        <div class="fiche-info-item">
+          <div class="fiche-info-label">Commentaire</div>
+          <div class="fiche-info-val" id="dtole-commentaire">—</div>
+        </div>
+      </div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-detail-tole').classList.remove('open')">Fermer</button>
+        <!-- Bouton modifier — masqué si profil Consultation (géré par JS) -->
+        <button id="dtole-btn-modifier" class="btn-modale btn-modale-vert" style="display:none">Modifier</button>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 6 — FICHE SECTION (depuis bouton 🔍 sur profilé)
+       Affiche le schéma SVG + dimensions normalisées sans quitter le stock
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-fiche-section" class="modale-bg" role="dialog" aria-modal="true" aria-label="Fiche section">
+    <div class="modale modale-lg">
+      <div class="modale-titre">Fiche section</div>
+
+      <!-- Badge norme + inventaire -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap">
+        <span id="fiche-badge-norme" class="badge badge-dispo" style="font-size:11px">—</span>
+        <span style="font-size:12px; color:#888">Profilé normalisé</span>
+      </div>
+
+      <!-- Schéma SVG + dimensions -->
+      <div class="schema-zone">
+        <div class="schema-svg-zone">
+          <div class="schema-titre" id="fiche-schema-label">—</div>
+          <svg id="fiche-svg" width="180" height="180" viewBox="0 0 160 160"></svg>
+        </div>
+        <div class="schema-dims">
+          <h4>Dimensions normalisées</h4>
+          <div id="fiche-dims-list">
+            <div style="color:#aaa;font-size:12px">Chargement…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventaire rapide -->
+      <div id="fiche-stock-info"
+           style="padding:8px 12px; background:#f4f4f4; border-radius:3px;
+                  font-size:12px; color:#666; border-left:3px solid var(--gris-bord); margin-top:4px">
+        —
+      </div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris"
+                onclick="document.getElementById('m-fiche-section').classList.remove('open')">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 7 — VALIDATION D'UN AJOUT/MODIFICATION STOCK (Admin)
+       Déclenchée par Stock.validerElement(id) sur un BAR ou TOL
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-valider-stock" class="modale-bg" role="dialog" aria-modal="true" aria-label="Valider un élément">
+    <div class="modale modale-lg">
+      <div class="modale-titre">Valider l'ajout</div>
+
+      <!-- Récapitulatif de l'élément (injecté par JS) -->
+      <div class="recap-validation">
+        <div id="vstock-recap">
+          <div style="color:#aaa;font-size:12px">Chargement…</div>
+        </div>
+      </div>
+
+      <div class="note-statut note-statut-direct">
+        ✔ En validant, l'élément sera intégré au stock avec le statut <strong>Disponible</strong>.
+      </div>
+
+      <div class="modale-footer">
+        <!-- Refuser directement depuis cette modale (bascule vers m-confirmation) -->
+        <button class="btn-modale btn-modale-gris btn-refuser-depuis-valider">✘ Refuser</button>
+        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-valider-stock').classList.remove('open')">Annuler</button>
+        <button class="btn-modale btn-modale-valider btn-valider-confirmer">✔ Valider</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 8 — VALIDATION D'UNE DEMANDE D'ATTRIBUTION (Admin)
+       Déclenchée par Stock.validerElement(id) sur un DEM
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-valider-demande" class="modale-bg" role="dialog" aria-modal="true" aria-label="Valider une demande">
+    <div class="modale modale-lg">
+      <div class="modale-titre">Valider la demande d'attribution</div>
+
+      <!-- Récapitulatif de la demande (injecté par JS) -->
+      <div class="recap-validation">
+        <div id="vdem-recap">
+          <div style="color:#aaa;font-size:12px">Chargement…</div>
+        </div>
+      </div>
+
+      <div class="note-statut note-statut-direct">
+        ✔ En validant, la barre sera marquée <strong>Affectée</strong> au chantier demandé.
+      </div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris btn-refuser-depuis-valider">✘ Refuser</button>
+        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-valider-demande').classList.remove('open')">Annuler</button>
+        <button class="btn-modale btn-modale-valider btn-valider-confirmer">✔ Valider</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE 9 — CONFIRMATION DE REFUS (générique)
+       Déclenchée par Stock.refuserElement(id) ou depuis m-valider-*
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-confirmation" class="modale-bg" role="dialog" aria-modal="true" aria-label="Confirmer le refus">
+    <div class="modale">
+      <div class="modale-titre">Confirmer le refus</div>
+
+      <!-- Message de confirmation (injecté par JS) -->
+      <div class="alerte-refus" id="conf-message">
+        Confirmer le refus de cet élément ?
+      </div>
+
+      <!-- Motif optionnel -->
+      <div class="zone-motif">
+        <div class="fr">
+          <label>Motif du refus (optionnel)</label>
+          <textarea id="conf-motif" placeholder="Précisez la raison du refus pour informer le soumetteur…" style="min-height:70px"></textarea>
+        </div>
+      </div>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris btn-annuler-refus">Annuler</button>
+        <button class="btn-modale btn-modale-rouge btn-confirmer-refus">✘ Confirmer le refus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCRIPTS ──────────────────────────────────────────────── -->
+  <script src="../auth/auth.js"></script>
+  <script src="../js/stock.js"></script>
+
+</body>
+</html>

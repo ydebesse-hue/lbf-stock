@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LBF — Bibliothèque de sections</title>
+<style>
+/* ══════════════════════════════════════════════
+   VARIABLES & RESET
+══════════════════════════════════════════════ */
+:root {
+  --rouge:    rgb(210, 35, 42);
+  --noir:     rgb(30, 30, 35);
+  --vert:     rgb(45, 95, 50);
+  --or:       #856404;
+  --or-bg:    #fff3cd;
+  --or-bord:  #e0a800;
+  --gris-bg:  #f0f0f0;
+  --gris-cl:  #e4e4e4;
+  --gris-bd:  #c4c4c4;
+  --blanc:    #ffffff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Tahoma, Geneva, sans-serif;
+  background: var(--gris-bg);
+  color: var(--noir);
+  font-size: 13px;
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════ */
+header {
+  background: var(--noir);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 54px;
+  border-bottom: 3px solid var(--rouge);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo-zone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-zone img {
+  height: 36px;
+  filter: brightness(10);
+}
+
+.logo-zone .logo-fallback {
+  font-family: Impact, sans-serif;
+  color: var(--rouge);
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+
+.app-title {
+  font-family: Impact, Haettenschweiler, sans-serif;
+  color: white;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.app-title span { color: var(--rouge); }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 2px;
+  font-family: Impact, sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.badge-rouge  { background: var(--rouge); color: white; }
+.badge-vert   { background: var(--vert);  color: white; }
+.badge-or     { background: var(--or);    color: white; }
+
+.user-info  { color: #aaa; font-size: 12px; }
+.btn-header {
+  background: none;
+  border: 1px solid #555;
+  color: #aaa;
+  padding: 4px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: Tahoma;
+}
+.btn-header:hover { border-color: #888; color: #ccc; }
+
+/* ══════════════════════════════════════════════
+   NAVIGATION PRINCIPALE
+══════════════════════════════════════════════ */
+.main-nav {
+  background: var(--blanc);
+  border-bottom: 2px solid var(--gris-cl);
+  display: flex;
+  padding: 0 20px;
+  align-items: center;
+}
+
+.nav-item {
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-family: Tahoma;
+  font-size: 13px;
+  font-weight: bold;
+  color: #777;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.nav-item:hover   { color: #444; }
+.nav-item.active  { color: var(--rouge); border-bottom-color: var(--rouge); }
+.nav-icon         { font-size: 14px; }
+
+/* ══════════════════════════════════════════════
+   SOUS-ONGLETS
+══════════════════════════════════════════════ */
+.sub-tabs {
+  background: #f8f8f8;
+  border-bottom: 1px solid var(--gris-cl);
+  display: flex;
+  padding: 0 20px;
+}
+
+.sub-tab {
+  padding: 7px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: Tahoma;
+  font-size: 12px;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+}
+.sub-tab.active { color: var(--vert); border-bottom-color: var(--vert); }
+
+/* ══════════════════════════════════════════════
+   TOOLBAR BIBLIOTHÈQUE
+══════════════════════════════════════════════ */
+.biblio-toolbar {
+  background: white;
+  padding: 9px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gris-cl);
+}
+
+.toolbar-sep { flex: 1; min-width: 10px; }
+
+.btn {
+  padding: 7px 13px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: Tahoma;
+  font-size: 13px;
+  font-weight: bold;
+}
+.btn-rouge { background: var(--rouge); color: white; }
+.btn-vert  { background: var(--vert);  color: white; }
+.btn-gris  { background: #e0e0e0; color: var(--noir); }
+
+.lbl {
+  font-size: 11px;
+  color: #999;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.sel {
+  padding: 6px 8px;
+  border: 1px solid var(--gris-bd);
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: Tahoma;
+}
+
+.search {
+  padding: 6px 10px;
+  border: 1px solid var(--gris-bd);
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: Tahoma;
+  width: 200px;
+}
+.search:focus, .sel:focus { outline: none; border-color: var(--rouge); }
+
+.alerte-attente {
+  font-weight: bold;
+  color: var(--or);
+  font-size: 13px;
+}
+
+/* ══════════════════════════════════════════════
+   GRILLE BIBLIOTHÈQUE
+══════════════════════════════════════════════ */
+.biblio-wrapper {
+  padding: 14px 20px;
+}
+
+.biblio-separateur {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px 4px;
+  font-family: Impact, sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #aaa;
+  border-bottom: 1px solid var(--gris-cl);
+  margin-bottom: 10px;
+}
+.sep-count {
+  font-family: Tahoma;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #bbb;
+}
+
+.biblio-grille-famille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+/* ══ Carte désignation ══ */
+.biblio-carte {
+  background: white;
+  border: 1px solid var(--gris-cl);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: default;
+  transition: box-shadow .15s, transform .15s;
+}
+.biblio-carte:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+  transform: translateY(-2px);
+}
+
+.carte-std     { border-top: 3px solid var(--vert); }
+.carte-custom  { border-top: 3px solid #6b21a8; }
+.carte-attente { border: 2px solid var(--or-bord); }
+
+.carte-header {
+  background: var(--noir);
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.carte-titre {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.carte-famille {
+  font-family: Impact, sans-serif;
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: white;
+  text-transform: uppercase;
+}
+
+.carte-desig {
+  font-family: Tahoma;
+  font-size: 14px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.8);
+}
+
+/* ── badges ── */
+.badge-std    { background: rgba(45,95,50,0.85);   color: white; font-size: 9px; padding: 2px 5px; border-radius: 2px; font-family: Impact; letter-spacing: .5px; }
+.badge-custom { background: rgba(107,33,168,0.85); color: white; font-size: 9px; padding: 2px 5px; border-radius: 2px; font-family: Impact; letter-spacing: .5px; }
+.badge-attente{ background: var(--or);             color: white; font-size: 9px; padding: 2px 5px; border-radius: 2px; font-family: Impact; letter-spacing: .5px; }
+
+.carte-corps {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  gap: 8px;
+  border-bottom: 1px solid var(--gris-cl);
+  min-height: 80px;
+}
+
+.carte-svg svg { display: block; }
+
+.carte-dims-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dim-chip {
+  background: var(--gris-bg);
+  border: 1px solid var(--gris-cl);
+  padding: 2px 5px;
+  border-radius: 2px;
+  font-size: 11px;
+  color: #555;
+}
+.dim-chip.poids {
+  background: #e8f0fe;
+  border-color: #a8c4f8;
+  color: #1a56c4;
+  font-weight: bold;
+}
+
+.carte-footer {
+  padding: 7px 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ══════════════════════════════════════════════
+   BOUTONS LIGNE
+══════════════════════════════════════════════ */
+.bl {
+  padding: 4px 8px;
+  font-size: 11px;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: Tahoma;
+  font-weight: bold;
+}
+.bl-detail  { background: #e8e8e8; color: var(--noir); }
+.bl-vert    { background: var(--vert);  color: white; }
+.bl-rouge   { background: var(--rouge); color: white; }
+.bl-valider { background: #198754; color: white; }
+.bl-refuser { background: #6c757d; color: white; }
+.bl:hover   { opacity: .85; }
+.bl:disabled{ opacity: .35; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════
+   COMPTEUR & VIDE
+══════════════════════════════════════════════ */
+.biblio-compteur {
+  padding: 4px 0 12px;
+  font-size: 12px;
+  color: #999;
+}
+
+.biblio-vide {
+  text-align: center;
+  padding: 40px 20px;
+  color: #aaa;
+}
+.biblio-vide p { margin-top: 10px; font-size: 14px; }
+
+/* ══════════════════════════════════════════════
+   MODALES
+══════════════════════════════════════════════ */
+.modale-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 16px;
+}
+.modale-bg.open { display: flex; }
+
+.modale {
+  background: white;
+  border-top: 4px solid var(--rouge);
+  border-radius: 4px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 22px 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+}
+.modale-lg { max-width: 680px; }
+.modale-xl { max-width: 820px; }
+
+.modale-titre {
+  font-family: Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  color: var(--noir);
+}
+
+.modale-sous-titre {
+  font-size: 12px;
+  color: #888;
+  margin-top: -10px;
+  margin-bottom: 14px;
+}
+
+.form-cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+.fr { margin-bottom: 8px; }
+.fr label {
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.fr input, .fr select, .fr textarea {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--gris-bd);
+  border-radius: 3px;
+  font-family: Tahoma;
+  font-size: 13px;
+}
+.fr input:focus, .fr select:focus, .fr textarea:focus {
+  outline: none;
+  border-color: var(--rouge);
+}
+
+.modale-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gris-cl);
+}
+
+/* Notes */
+.note-attente {
+  background: var(--or-bg);
+  border: 1px solid var(--or-bord);
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--or);
+  margin-top: 10px;
+}
+.note-info {
+  background: #e8f0fe;
+  border: 1px solid #a8c4f8;
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #1a56c4;
+  margin-top: 10px;
+}
+
+/* Zone schéma */
+.schema-zone {
+  background: #f7f7f7;
+  border: 1px solid var(--gris-bd);
+  border-radius: 3px;
+  padding: 14px;
+  margin: 12px 0;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.schema-titre {
+  font-family: Impact, sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--rouge);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.schema-dims { flex: 1; min-width: 180px; }
+.schema-dims h4 {
+  font-family: Impact, sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--noir);
+  margin-bottom: 10px;
+}
+
+.dim-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+}
+.dim-label { color: #666; }
+.dim-val   { font-weight: bold; }
+
+/* Zone dimensions modale nouvelle section */
+.dims-inputs {
+  background: #f7f7f7;
+  border: 1px solid var(--gris-bd);
+  border-radius: 3px;
+  padding: 12px 14px;
+  margin: 10px 0;
+}
+.dims-inputs-title {
+  font-family: Impact, sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--noir);
+  margin-bottom: 10px;
+}
+
+/* Badge dispo */
+.dispo-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.d-std    { background: #e8f0fe; color: #1a56c4; border: 1px solid #1a56c4; }
+.d-custom { background: #f3e8ff; color: #6b21a8; border: 1px solid #6b21a8; }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE MOBILE
+══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  header { padding: 0 12px; height: 48px; }
+  .app-title { font-size: 15px; }
+  .user-info { display: none; }
+  .main-nav  { padding: 0 12px; }
+  .nav-item  { padding: 9px 12px; font-size: 12px; }
+  .biblio-toolbar { padding: 8px 12px; }
+  .biblio-wrapper { padding: 10px 12px; }
+  .biblio-grille-famille { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .form-cols2, .form-cols3 { grid-template-columns: 1fr; }
+  .modale { padding: 16px; }
+  .search { width: 140px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════
+     HEADER
+══════════════════════ -->
+<header>
+  <div class="logo-zone">
+    <img src="assets/Logo_LBF.png" alt="LBF"
+         onerror="this.style.display='none'; document.querySelector('.logo-fallback').style.display='block'">
+    <span class="logo-fallback" style="display:none">LBF</span>
+    <div class="app-title">Stock <span>Métallerie</span></div>
+  </div>
+  <div class="header-right">
+    <!-- Badge profil — mis à jour par biblioSetProfil() -->
+    <span id="header-badge" class="badge badge-rouge">Consultation</span>
+    <span id="header-user"  class="user-info">Visiteur</span>
+    <button class="btn-header" onclick="Auth.logout()">Déconnexion</button>
+  </div>
+</header>
+
+<!-- ══════════════════════
+     NAVIGATION
+══════════════════════ -->
+<nav class="main-nav">
+  <a href="stock.html" class="nav-item"><span class="nav-icon">📦</span> Stock</a>
+  <button class="nav-item active"><span class="nav-icon">📚</span> Bibliothèque</button>
+  <a href="comptes.html" class="nav-item nav-item-droite" data-require="can_manage_users"><span class="nav-icon">⚙</span> Comptes</a>
+</nav>
+
+<!-- ══════════════════════
+     SOUS-ONGLETS
+══════════════════════ -->
+<div class="sub-tabs">
+  <button class="sub-tab active" onclick="switchOnglet('profils',this)">Profilés</button>
+  <button class="sub-tab"        onclick="switchOnglet('toles',this)">Tôles <span style="font-size:10px;color:#aaa">(à venir)</span></button>
+</div>
+
+<!-- ══════════════════════
+     TOOLBAR
+══════════════════════ -->
+<div class="biblio-toolbar">
+  <!-- Bouton ajout — visible Gestion + Admin seulement -->
+  <div id="biblio-btn-ajout"></div>
+
+  <!-- Alerte admin : sections en attente -->
+  <span id="biblio-alerte-attente" class="alerte-attente" style="display:none"></span>
+
+  <span class="lbl">Filtrer :</span>
+  <select class="sel" id="biblio-filtre-famille">
+    <option value="">Toutes les familles</option>
+    <option value="IPE">IPE</option>
+    <option value="HEA">HEA</option>
+    <option value="HEB">HEB</option>
+    <option value="UPN">UPN</option>
+    <option value="Cornière">Cornière</option>
+    <option value="Plat">Plat</option>
+  </select>
+
+  <div class="toolbar-sep"></div>
+  <input class="search" type="text" id="biblio-recherche"
+         placeholder="🔍 Rechercher une désignation...">
+</div>
+
+<!-- ══════════════════════
+     CONTENU PRINCIPAL
+══════════════════════ -->
+<div class="biblio-wrapper">
+  <div id="biblio-compteur" class="biblio-compteur">Chargement...</div>
+  <div id="biblio-grille"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODALE — FICHE DÉTAIL SECTION
+══════════════════════════════════════════ -->
+<div id="m-detail-biblio" class="modale-bg" onclick="bgClose(event,'m-detail-biblio')">
+  <div class="modale modale-lg" onclick="event.stopPropagation()">
+
+    <div class="modale-titre">Fiche section</div>
+
+    <!-- Badge norme + description -->
+    <div class="detail-badge-zone" style="display:flex; gap:8px; align-items:center; margin-bottom:14px;"></div>
+
+    <!-- SVG coté + dimensions -->
+    <div class="schema-zone">
+      <div class="detail-svg-zone"></div>
+      <div class="schema-dims">
+        <h4>Dimensions normalisées</h4>
+        <div class="detail-dims-zone"></div>
+      </div>
+    </div>
+
+    <!-- Infos stock — sera alimenté depuis stock.json dans Conv. 4 -->
+    <div id="detail-stock-info"
+         style="padding:8px 12px; background:#f4f4f4; border-radius:3px;
+                font-size:12px; color:#666; border-left:3px solid var(--gris-bd);">
+      <strong>En stock :</strong> — barres disponibles
+    </div>
+
+    <div class="modale-footer">
+      <button class="btn btn-gris" onclick="closeM('m-detail-biblio')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODALE — NOUVELLE SECTION (Gestion + Admin)
+══════════════════════════════════════════ -->
+<div id="m-nouvelle-section" class="modale-bg" onclick="bgClose(event,'m-nouvelle-section')">
+  <div class="modale modale-xl" onclick="event.stopPropagation()">
+
+    <div class="modale-titre" id="ns-titre">Créer une nouvelle section</div>
+    <div class="modale-sous-titre">
+      Renseignez la famille, la désignation et les dimensions de la section.
+    </div>
+
+    <!-- Famille + Désignation -->
+    <div class="form-cols2">
+      <div class="fr">
+        <label>Famille de section</label>
+        <select id="ns-famille" onchange="nsUpdateFamille()">
+          <option value="">— Choisir ou créer —</option>
+          <option>IPE</option>
+          <option>HEA</option>
+          <option>HEB</option>
+          <option>UPN</option>
+          <option>Cornière</option>
+          <option>Plat</option>
+          <option value="nouveau">+ Nouvelle famille...</option>
+        </select>
+      </div>
+
+      <!-- Champ nouvelle famille (masqué par défaut) -->
+      <div class="fr" id="ns-nouvelle-famille-zone" style="display:none">
+        <label>Nom de la nouvelle famille</label>
+        <input type="text" id="ns-nouvelle-famille"
+               placeholder="ex : IPN, CAE, Poutrelle treillis..."
+               oninput="nsUpdateRecap()">
+      </div>
+
+      <div class="fr">
+        <label>Désignation / Référence</label>
+        <input type="text" id="ns-desig"
+               placeholder="ex : 200, 80×80×4, 120/10..."
+               oninput="nsUpdateRecap()">
+      </div>
+    </div>
+
+    <!-- Champs dimensions dynamiques -->
+    <div class="dims-inputs">
+      <div class="dims-inputs-title">Dimensions (mm)</div>
+      <div class="form-cols3" id="ns-dims-zone">
+        <div style="color:#aaa; font-size:12px; grid-column:1/-1">
+          Sélectionnez d'abord une famille de section.
+        </div>
+      </div>
+    </div>
+
+    <!-- Aperçu schéma + récapitulatif -->
+    <div class="schema-zone">
+      <div>
+        <div class="schema-titre">Aperçu schéma</div>
+        <div id="ns-svg-zone">
+          <!-- SVG généré par JS -->
+        </div>
+        <div style="font-size:10px; color:#aaa; text-align:center; margin-top:4px">
+          Mis à jour selon la famille
+        </div>
+      </div>
+      <div style="flex:1; min-width:160px;">
+        <h4 style="font-family:Impact;font-size:13px;letter-spacing:1px;
+                   text-transform:uppercase;margin-bottom:10px">Récapitulatif</h4>
+        <div class="ns-recap"></div>
+      </div>
+    </div>
+
+    <!-- Note statut (injection par JS selon profil) -->
+    <div class="note-statut"></div>
+
+    <div class="modale-footer">
+      <button class="btn btn-gris" onclick="closeM('m-nouvelle-section')">Annuler</button>
+      <button class="btn btn-rouge" onclick="biblioSoumettre()">
+        Soumettre pour validation
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════
+     SCRIPTS
+══════════════════════ -->
+<script src="../auth/auth.js"></script>
+<script src="../js/bibliotheque.js"></script>
+<script>
+/* ══════════════════════════════════════════════
+   INITIALISATION DE LA PAGE
+══════════════════════════════════════════════ */
+
+/**
+ * Récupère le profil depuis la session Auth (Conv. 2)
+ * ou utilise 'consultation' par défaut
+ */
+function getProfilCourant() {
+  const session = window.Auth ? window.Auth.getSession() : null;
+  return session ? session.profil : 'consultation';
+}
+
+/**
+ * Met à jour le header selon le profil
+ */
+function biblioSetHeaderProfil(profil) {
+  // Utilise Auth pour injecter nom + badge
+  if (window.Auth) {
+    window.Auth.afficherInfosSession('#header-user', '#header-badge');
+    window.Auth.appliquerDroitsDOM();
+  }
+}
+
+/**
+ * Affiche l'alerte admin si des sections sont en attente
+ */
+function biblioAfficheAlerteAttente() {
+  const nb = Biblio.data.custom.filter(s => s.statut === 'attente').length;
+  const el = document.getElementById('biblio-alerte-attente');
+  if (!el) return;
+
+  if (nb > 0 && Biblio.profil === 'administration') {
+    el.textContent = `⚠ ${nb} section(s) en attente de validation`;
+    el.style.display = 'inline';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+/* ══ Démarrage ══ */
+(async function demarrer() {
+  // Garde de route — redirige vers login si pas de session
+  if (window.Auth) window.Auth.requireAuth();
+
+  const profil = getProfilCourant();
+  biblioSetHeaderProfil(profil);
+
+  // Chargement des sections custom depuis localStorage (si démo)
+  biblioChargerCustom();
+
+  // Initialisation du module
+  await biblioInit(profil);
+
+  // Alerte sections en attente (admin)
+  biblioAfficheAlerteAttente();
+})();
+
+/* ══════════════════════════════════════════════
+   NAVIGATION & MODALES
+══════════════════════════════════════════════ */
+
+function openM(id)  { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+function bgClose(e, id) {
+  if (e.target === document.getElementById(id)) closeM(id);
+}
+
+function retourAccueil() {
+  window.location.href = '../index.html';
+}
+
+/**
+ * Basculement onglet Profilés / Tôles
+ */
+function switchOnglet(onglet, btn) {
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (onglet === 'toles') {
+    document.getElementById('biblio-grille').innerHTML = `
+      <div class="biblio-vide">
+        <span style="font-size:32px">🔧</span>
+        <p>Module Tôles — disponible prochainement (Conv. 5)</p>
+      </div>`;
+    document.getElementById('biblio-compteur').textContent = '';
+    document.getElementById('biblio-filtre-famille').style.display = 'none';
+  } else {
+    document.getElementById('biblio-filtre-famille').style.display = '';
+    biblioRendreGrille();
+  }
+}
+</script>
+
+</body>
+</html>

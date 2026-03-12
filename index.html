@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Métallerie — LBF</title>
+  <style>
+    :root {
+      --rouge: rgb(210, 35, 42);
+      --noir:  rgb(30, 30, 35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Tahoma, Geneva, sans-serif;
+      background: var(--noir);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .splash {
+      text-align: center;
+      animation: pulse 1.2s ease-in-out infinite alternate;
+    }
+
+    .splash-titre {
+      font-family: Impact, Haettenschweiler, sans-serif;
+      font-size: 18px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-top: 12px;
+    }
+
+    .splash-titre span { color: var(--rouge); }
+
+    /* Barre de chargement */
+    .barre {
+      width: 160px;
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      margin: 18px auto 0;
+      overflow: hidden;
+    }
+
+    .barre-progress {
+      height: 100%;
+      background: var(--rouge);
+      border-radius: 2px;
+      animation: chargement 0.8s ease-out forwards;
+    }
+
+    @keyframes chargement {
+      from { width: 0%; }
+      to   { width: 100%; }
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.7; }
+      to   { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="splash">
+    <div class="splash-titre">Stock <span>Métallerie</span></div>
+    <div class="barre"><div class="barre-progress"></div></div>
+  </div>
+
+  <script src="auth/auth.js"></script>
+  <script>
+    /**
+     * index.html — Point d'entrée de l'application
+     * Rôle : vérifier la session et rediriger vers la bonne page.
+     * Aucun contenu applicatif ici.
+     */
+    (function router() {
+      const session = window.Auth.getSession();
+
+      if (!session) {
+        // Pas de session → page de connexion
+        window.location.replace('login.html');
+        return;
+      }
+
+      // Session active → toujours vers la vue stock
+      // (la vue s'adapte ensuite selon le profil)
+      window.location.replace('views/stock.html');
+    })();
+  </script>
+
+</body>
+</html>
