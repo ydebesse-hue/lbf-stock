@@ -346,6 +346,7 @@ const Stock = (() => {
 
   function _valTri(item) {
     switch (_tri.col) {
+      case 'id':          return item.id               || '';
       case 'type':        return item.section_type     || '';
       case 'designation': return item.designation      || '';
       case 'longueur':    return item.longueur_m       || 0;
@@ -353,6 +354,7 @@ const Stock = (() => {
       case 'chantier':    return item.chantier_origine || '';
       case 'lieu':        return item.lieu_stockage    || '';
       case 'dispo':       return item.disponibilite    || '';
+      case 'date':        return item.date_ajout       || '';
       case 'epaisseur':   return item.epaisseur_mm     || 0;
       case 'dimensions':  return (item.largeur_mm || 0) * 100000 + (item.longueur_mm || 0);
       case 'quantite':    return item.quantite         || 0;
@@ -383,13 +385,15 @@ const Stock = (() => {
     const modif = Auth.hasRight('can_edit');
 
     const cols = [
+      { col: 'id',          label: 'ID'               },
       { col: 'type',        label: 'Type'             },
       { col: 'designation', label: 'Désignation'      },
       { col: 'longueur',    label: 'Longueur (m)'     },
-      { col: 'poids',       label: 'Poids barre (kg)' },
+      { col: 'poids',       label: 'Poids (kg)'       },
+      { col: 'lieu',        label: 'Stockage'         },
+      { col: 'date',        label: 'Date ajout'       },
       { col: 'chantier',    label: 'Chantier origine' },
-      { col: 'lieu',        label: 'Lieu stockage'    },
-      { col: 'dispo',       label: 'Disponibilité'    },
+      { col: 'dispo',       label: 'Statut'           },
     ];
 
     let h = '<table><thead><tr>';
@@ -398,26 +402,35 @@ const Stock = (() => {
       const ind   = actif ? (_tri.ordre === 'asc' ? '▲' : '▼') : '⇅';
       h += `<th data-col="${c.col}" class="${actif ? 'tri-actif' : ''}">${c.label} <span class="tri-ind">${ind}</span></th>`;
     });
-    h += '<th>Actions</th></tr></thead><tbody>';
+    h += '<th>Action</th></tr></thead><tbody>';
 
     if (!data.length) {
-      h += `<tr><td colspan="8" class="vide">Aucun profilé ne correspond aux filtres.</td></tr>`;
+      h += `<tr><td colspan="10" class="vide">Aucun profilé ne correspond aux filtres.</td></tr>`;
     } else {
       data.forEach(b => {
         const attente = b.statut === 'en_attente';
         const poids   = b.poids_barre_kg
           ? b.poids_barre_kg.toFixed(1)
           : (b.poids_ml * b.longueur_m).toFixed(1);
+        const dateAjout = b.date_ajout
+          ? new Date(b.date_ajout).toLocaleDateString('fr-FR')
+          : '—';
 
         h += `<tr${attente ? ' class="ligne-attente"' : ''}>`;
+        h += `<td class="td-id"><span class="chip-id">${_e(b.id)}</span></td>`;
         h += `<td><strong>${_e(b.section_type)}</strong></td>`;
-        h += `<td>${_e(b.designation)}</td>`;
+        h += `<td>${_e(b.designation)}
+          <button class="btn-inline" onclick="Stock.ouvrirFicheSection('${_e(b.section_type)}','${_e(b.designation)}')" title="Fiche section">voir</button>
+        </td>`;
         h += `<td>${b.longueur_m.toFixed(2)}</td>`;
         h += `<td>${poids}</td>`;
+        h += `<td>${_e(b.lieu_stockage)}
+          <button class="btn-inline btn-inline-carte" onclick="_ouvrirCarte('${_e(b.lieu_stockage)}')" title="Voir sur le plan">carte</button>
+        </td>`;
+        h += `<td>${dateAjout}</td>`;
         h += `<td>${_e(b.chantier_origine)}${b.chantier_affectation
           ? ` <span class="chip-chantier" title="Affecté à : ${_e(b.chantier_affectation)}">→ ${_e(b.chantier_affectation)}</span>`
           : ''}</td>`;
-        h += `<td>${_e(b.lieu_stockage)}</td>`;
         h += `<td>${_badgeDispo(b)}</td>`;
         h += `<td class="td-actions">${_actionsLigneProfil(b, modif, admin)}</td>`;
         h += `</tr>`;
@@ -432,13 +445,15 @@ const Stock = (() => {
     const modif = Auth.hasRight('can_edit');
 
     const cols = [
-      { col: 'epaisseur',  label: 'Ép. (mm)'        },
-      { col: 'dimensions', label: 'Dimensions'       },
+      { col: 'id',         label: 'ID'               },
+      { col: 'epaisseur',  label: 'Ép. (mm)'         },
+      { col: 'dimensions', label: 'Dimensions'        },
       { col: 'quantite',   label: 'Qté'              },
       { col: 'poids',      label: 'Poids unit. (kg)' },
+      { col: 'lieu',       label: 'Stockage'         },
+      { col: 'date',       label: 'Date ajout'       },
       { col: 'chantier',   label: 'Chantier origine' },
-      { col: 'lieu',       label: 'Lieu stockage'    },
-      { col: 'dispo',      label: 'Disponibilité'    },
+      { col: 'dispo',      label: 'Statut'           },
     ];
 
     let h = '<table><thead><tr>';
@@ -447,24 +462,31 @@ const Stock = (() => {
       const ind   = actif ? (_tri.ordre === 'asc' ? '▲' : '▼') : '⇅';
       h += `<th data-col="${c.col}" class="${actif ? 'tri-actif' : ''}">${c.label} <span class="tri-ind">${ind}</span></th>`;
     });
-    h += '<th>Actions</th></tr></thead><tbody>';
+    h += '<th>Action</th></tr></thead><tbody>';
 
     if (!data.length) {
-      h += `<tr><td colspan="8" class="vide">Aucune tôle ne correspond aux filtres.</td></tr>`;
+      h += `<tr><td colspan="10" class="vide">Aucune tôle ne correspond aux filtres.</td></tr>`;
     } else {
       data.forEach(t => {
-        const attente = t.statut === 'en_attente';
-        const dims    = `${t.largeur_mm} × ${t.longueur_mm} mm`;
+        const attente  = t.statut === 'en_attente';
+        const dims     = `${t.largeur_mm} × ${t.longueur_mm} mm`;
+        const dateAjout = t.date_ajout
+          ? new Date(t.date_ajout).toLocaleDateString('fr-FR')
+          : '—';
 
         h += `<tr${attente ? ' class="ligne-attente"' : ''}>`;
+        h += `<td class="td-id"><span class="chip-id">${_e(t.id)}</span></td>`;
         h += `<td><strong>${t.epaisseur_mm} mm</strong></td>`;
         h += `<td>${dims}</td>`;
         h += `<td>${t.quantite} pièce${t.quantite > 1 ? 's' : ''}</td>`;
         h += `<td>${t.poids_unitaire_kg.toFixed(1)} <span style="color:#999;font-size:11px">(tot.&nbsp;${t.poids_total_kg.toFixed(1)})</span></td>`;
+        h += `<td>${_e(t.lieu_stockage)}
+          <button class="btn-inline btn-inline-carte" onclick="_ouvrirCarte('${_e(t.lieu_stockage)}')" title="Voir sur le plan">carte</button>
+        </td>`;
+        h += `<td>${dateAjout}</td>`;
         h += `<td>${_e(t.chantier_origine)}${t.chantier_affectation
           ? ` <span class="chip-chantier" title="Affecté à : ${_e(t.chantier_affectation)}">→ ${_e(t.chantier_affectation)}</span>`
           : ''}</td>`;
-        h += `<td>${_e(t.lieu_stockage)}</td>`;
         h += `<td>${_badgeDispo(t)}</td>`;
         h += `<td class="td-actions">${_actionsLigneTole(t, modif, admin)}</td>`;
         h += `</tr>`;
@@ -2071,6 +2093,35 @@ const Stock = (() => {
       </div>`;
   }
 
+
+  /* ──────────────────────────────────────────────────────────────
+     MODALE CARTE DE STOCKAGE
+     ────────────────────────────────────────────────────────────── */
+
+  /**
+   * Ouvre la modale de plan de stockage et met en évidence la zone.
+   * @param {string} lieu — nom du lieu de stockage
+   */
+  function _ouvrirCarte(lieu) {
+    const m = document.getElementById('m-carte');
+    if (!m) return;
+
+    // Titre
+    const titre = m.querySelector('#carte-titre');
+    if (titre) titre.textContent = `Emplacement : ${lieu}`;
+
+    // Mettre en évidence la zone correspondante sur le plan SVG
+    m.querySelectorAll('.zone-stockage').forEach(z => {
+      const actif = z.dataset.zone === lieu;
+      z.classList.toggle('zone-active', actif);
+      z.classList.toggle('zone-inactive', !actif);
+    });
+
+    m.classList.add('open');
+  }
+
+  // Exposer _ouvrirCarte globalement (appelée depuis le HTML généré)
+  window._ouvrirCarte = _ouvrirCarte;
 
   /* ──────────────────────────────────────────────────────────────
      API PUBLIQUE

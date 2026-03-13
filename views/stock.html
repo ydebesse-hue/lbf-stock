@@ -332,6 +332,39 @@
 
     /* ── BOUTONS LIGNE ────────────────────────────────────────── */
     .td-actions { white-space: nowrap; }
+    .td-id { white-space: nowrap; }
+
+    /* Chip ID */
+    .chip-id {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 11px;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 2px;
+      padding: 1px 5px;
+      color: #555;
+    }
+
+    /* Boutons inline dans les cellules (voir, carte) */
+    .btn-inline {
+      display: inline-block;
+      margin-left: 5px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: Tahoma;
+      background: #e8e8e8;
+      color: var(--noir);
+      vertical-align: middle;
+      transition: background .12s;
+    }
+    .btn-inline:hover { background: #d0d0d0; }
+    .btn-inline-carte { background: #e8f0fe; color: #1a56c4; }
+    .btn-inline-carte:hover { background: #c8d8f8; }
 
     .btn-ligne {
       padding: 4px 7px;
@@ -1297,6 +1330,73 @@
   </div>
 
   <!-- ── SCRIPTS ──────────────────────────────────────────────── -->
+  <!-- ══ MODALE CARTE DE STOCKAGE ══ -->
+  <div id="m-carte" class="modale-bg" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modale modale-lg" onclick="event.stopPropagation()">
+      <div class="modale-titre" id="carte-titre">Plan de stockage</div>
+
+      <!-- Plan SVG de l'atelier — à remplacer par votre plan réel -->
+      <div style="background:#f7f7f7; border:1px solid var(--gris-bord); border-radius:3px; padding:16px; margin-bottom:14px;">
+        <svg id="plan-atelier" viewBox="0 0 600 380" style="width:100%; height:auto; display:block;">
+
+          <!-- Contour atelier -->
+          <rect x="10" y="10" width="580" height="360" fill="white" stroke="#ccc" stroke-width="2" rx="4"/>
+
+          <!-- Zone Rack 1 -->
+          <rect class="zone-stockage" data-zone="Rack 1"
+            x="40" y="40" width="120" height="80" rx="3"
+            fill="#e6f4ea" stroke="rgb(45,95,50)" stroke-width="2"/>
+          <text x="100" y="76" text-anchor="middle" font-family="Impact" font-size="14" fill="rgb(45,95,50)" pointer-events="none">Rack 1</text>
+
+          <!-- Zone Rack 2 -->
+          <rect class="zone-stockage" data-zone="Rack 2"
+            x="200" y="40" width="120" height="80" rx="3"
+            fill="#e6f4ea" stroke="rgb(45,95,50)" stroke-width="2"/>
+          <text x="260" y="76" text-anchor="middle" font-family="Impact" font-size="14" fill="rgb(45,95,50)" pointer-events="none">Rack 2</text>
+
+          <!-- Zone Rack 3 -->
+          <rect class="zone-stockage" data-zone="Rack 3"
+            x="360" y="40" width="120" height="80" rx="3"
+            fill="#e6f4ea" stroke="rgb(45,95,50)" stroke-width="2"/>
+          <text x="420" y="76" text-anchor="middle" font-family="Impact" font-size="14" fill="rgb(45,95,50)" pointer-events="none">Rack 3</text>
+
+          <!-- Zone Rack 4 -->
+          <rect class="zone-stockage" data-zone="Rack 4"
+            x="40" y="160" width="120" height="80" rx="3"
+            fill="#e6f4ea" stroke="rgb(45,95,50)" stroke-width="2"/>
+          <text x="100" y="196" text-anchor="middle" font-family="Impact" font-size="14" fill="rgb(45,95,50)" pointer-events="none">Rack 4</text>
+
+          <!-- Zone Extérieur -->
+          <rect class="zone-stockage" data-zone="Extérieur"
+            x="40" y="280" width="520" height="60" rx="3"
+            fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+          <text x="300" y="316" text-anchor="middle" font-family="Impact" font-size="14" fill="#e65100" pointer-events="none">Extérieur</text>
+
+          <!-- Légende -->
+          <text x="300" y="370" text-anchor="middle" font-family="Tahoma" font-size="10" fill="#aaa">
+            Plan provisoire — à remplacer par le plan réel de l'atelier
+          </text>
+        </svg>
+      </div>
+
+      <div id="carte-info" style="font-size:13px; color:#555; padding:6px 10px; background:#f4f4f4; border-radius:3px; border-left:3px solid var(--rouge);">
+        Zone mise en évidence sur le plan.
+      </div>
+
+      <div class="modale-footer">
+        <button class="btn btn-gris" onclick="document.getElementById('m-carte').classList.remove('open')">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Zones du plan de stockage */
+    .zone-stockage { cursor: default; transition: fill .2s, stroke-width .2s; }
+    .zone-active   { fill: rgb(210,35,42) !important; stroke: rgb(140,20,25) !important; stroke-width: 3 !important; }
+    .zone-active + text { fill: white !important; }
+    .zone-inactive { opacity: 0.35; }
+  </style>
+
   <script src="../js/supabase.js"></script>
   <script src="../auth/auth.js"></script>
   <script src="../js/stock.js"></script>
