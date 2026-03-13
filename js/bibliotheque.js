@@ -60,16 +60,44 @@ async function biblioInit(profil) {
 ══════════════════════════════════════════════ */
 
 /**
- * Rendu complet de la grille de cartes
- * Tient compte des filtres actifs et du profil
+ * Rendu de la grille — une carte par famille de section
  */
 function biblioRendreGrille() {
   const conteneur = document.getElementById('biblio-grille');
   if (!conteneur) return;
 
-  const sections = biblioGetSectionsFiltrees();
+  // Construire la liste des familles disponibles
+  const familles = {};
+  Biblio.data.standard.forEach(fam => {
+    // Filtre famille
+    if (Biblio.filtres.famille && fam.famille !== Biblio.filtres.famille) return;
+    // Filtre recherche
+    if (Biblio.filtres.recherche) {
+      const match = fam.sections.some(s =>
+        `${fam.famille} ${s.desig}`.toLowerCase().includes(Biblio.filtres.recherche)
+      );
+      if (!match) return;
+    }
+    familles[fam.famille] = {
+      famille: fam.famille,
+      norme:   fam.norme,
+      source:  'standard',
+      sections: fam.sections,
+      statut:  'valide'
+    };
+  });
 
-  if (sections.length === 0) {
+  // Sections custom — regroupées par famille
+  Biblio.data.custom.forEach(s => {
+    if (Biblio.filtres.famille && s.famille !== Biblio.filtres.famille) return;
+    if (s.statut === 'attente' && Biblio.profil === 'consultation') return;
+    if (!familles[s.famille]) {
+      familles[s.famille] = { famille: s.famille, norme: '', source: 'custom', sections: [], statut: s.statut };
+    }
+    familles[s.famille].sections.push(s);
+  });
+
+  if (Object.keys(familles).length === 0) {
     conteneur.innerHTML = `
       <div class="biblio-vide">
         <span style="font-size:32px">🔍</span>
@@ -80,35 +108,41 @@ function biblioRendreGrille() {
 
   conteneur.innerHTML = '';
 
-  // Regroupement par famille pour affichage par blocs
-  const groupes = {};
-  sections.forEach(s => {
-    const fam = s.famille;
-    if (!groupes[fam]) groupes[fam] = [];
-    groupes[fam].push(s);
+  Object.values(familles).forEach(fam => {
+    conteneur.appendChild(biblioCreerCarteFamille(fam));
   });
 
-  Object.entries(groupes).forEach(([famille, items]) => {
-    // Séparateur de section
-    const sep = document.createElement('div');
-    sep.className = 'biblio-separateur';
-    sep.innerHTML = `<span>${famille}</span><span class="sep-count">${items.length} désignation(s)</span>`;
-    conteneur.appendChild(sep);
-
-    // Grille des cartes pour cette famille
-    const grille = document.createElement('div');
-    grille.className = 'biblio-grille-famille';
-    items.forEach(section => {
-      grille.appendChild(biblioCreerCarteDesig(section));
-    });
-    conteneur.appendChild(grille);
-  });
-
-  // Compteur total
   const compteur = document.getElementById('biblio-compteur');
   if (compteur) {
-    compteur.textContent = `${sections.length} désignation(s) affichée(s)`;
+    const total = Object.values(familles).reduce((s, f) => s + f.sections.length, 0);
+    compteur.textContent = `${Object.keys(familles).length} famille(s) — ${total} désignation(s)`;
   }
+}
+
+/**
+ * Crée une carte pour une famille de section
+ * @param {Object} fam — { famille, norme, source, sections, statut }
+ * @returns {HTMLElement}
+ */
+function biblioCreerCarteFamille(fam) {
+  const carte = document.createElement('div');
+  carte.className = 'biblio-carte carte-famille';
+  carte.style.cursor = 'pointer';
+  carte.onclick = () => biblioOuvrirModaleFamille(fam.famille);
+
+  const svgMini = biblioSvgMini(fam.famille, 80, 66);
+
+  carte.innerHTML = `
+    <div class="carte-header">
+      <span class="carte-famille" style="font-size:18px;">${fam.famille}</span>
+      <span style="font-size:10px;color:rgba(255,255,255,0.6);">${fam.sections.length} réf.</span>
+    </div>
+    <div class="carte-svg-zone">${svgMini}</div>
+    <div class="carte-bas">
+      <span style="font-size:11px;color:var(--vert);font-weight:bold;">${fam.norme || 'Section personnalisée'}</span>
+    </div>`;
+
+  return carte;
 }
 
 /**
@@ -257,6 +291,179 @@ function biblioGetSectionsFiltrees() {
 /* ══════════════════════════════════════════════
    MODALE FICHE DÉTAIL
 ══════════════════════ */
+
+/* ══════════════════════════════════════════════
+   MODALE FAMILLE — TABLEAU + SVG
+══════════════════════════════════════════════ */
+
+/**
+ * Ouvre la modale famille avec tableau des désignations
+ * @param {string} nomFamille
+ */
+function biblioOuvrirModaleFamille(nomFamille) {
+  const m = document.getElementById('m-famille');
+  if (!m) return;
+
+  // Trouver la famille dans les données
+  const famStd = Biblio.data.standard.find(f => f.famille === nomFamille);
+  const sections = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === nomFamille);
+  const norme    = famStd ? famStd.norme : '';
+
+  m.querySelector('#mf-titre').textContent     = nomFamille;
+  m.querySelector('#mf-norme').textContent     = norme;
+  m.querySelector('#mf-svg-zone').innerHTML    = biblioSvgCote({ famille: nomFamille, ...sections[0] }, 200, 180);
+  m.querySelector('#mf-dims').innerHTML        = '';
+  m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
+
+  // Construire le tableau
+  const colonnes = _colonnesFamille(nomFamille);
+  let thead = '<tr style="background:rgb(30,30,35);">';
+  thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 10px;text-align:left;">Désig.</th>';
+  colonnes.forEach(c => {
+    thead += `<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 6px;text-align:right;">${c.label}</th>`;
+  });
+  thead += '</tr>';
+
+  let tbody = '';
+  sections.forEach((s, i) => {
+    tbody += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig('${nomFamille}',${i})" style="border-bottom:1px solid #eee;cursor:pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="if(!this.classList.contains('mf-active'))this.style.background=''">`;
+    tbody += `<td style="padding:7px 10px;font-weight:bold;">${s.desig}</td>`;
+    colonnes.forEach(c => {
+      tbody += `<td style="padding:7px 6px;text-align:right;color:#555;">${s[c.key] !== undefined ? s[c.key] : '—'}</td>`;
+    });
+    tbody += '</tr>';
+  });
+
+  m.querySelector('#mf-thead').innerHTML = thead;
+  m.querySelector('#mf-tbody').innerHTML = tbody;
+
+  // Mémoriser la famille active
+  m.dataset.famille = nomFamille;
+
+  m.classList.add('open');
+}
+
+/**
+ * Sélectionne une désignation dans le tableau et met à jour le SVG + dims
+ */
+function biblioSelectionnerDesig(nomFamille, idx) {
+  const m = document.getElementById('m-famille');
+  if (!m) return;
+
+  // Trouver la section
+  const famStd = Biblio.data.standard.find(f => f.famille === nomFamille);
+  const sections = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === nomFamille);
+  const s = sections[idx];
+  if (!s) return;
+
+  // Mettre en évidence la ligne
+  m.querySelectorAll('.mf-ligne').forEach((tr, i) => {
+    tr.classList.toggle('mf-active', i === idx);
+    tr.style.background  = i === idx ? 'rgb(210,35,42)' : '';
+    tr.style.color       = i === idx ? 'white' : '';
+    tr.querySelectorAll('td').forEach(td => td.style.color = i === idx ? 'white' : '');
+  });
+
+  // Mettre à jour le SVG coté
+  m.querySelector('#mf-svg-zone').innerHTML = biblioSvgCote({ famille: nomFamille, ...s }, 200, 180);
+  m.querySelector('#mf-desig-label').textContent = `${nomFamille} ${s.desig}`;
+
+  // Mettre à jour les dimensions
+  const dims = _dimsSection(s, nomFamille);
+  m.querySelector('#mf-dims').innerHTML = dims.map(d =>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px;">
+      <span style="color:#666;">${d[0]}</span>
+      <span style="font-weight:bold;">${d[1]}</span>
+    </div>`
+  ).join('');
+}
+
+/**
+ * Retourne les colonnes à afficher selon la famille
+ */
+function _colonnesFamille(famille) {
+  switch (famille) {
+    case 'IPE': case 'HEA': case 'HEB':
+      return [
+        { key:'h',   label:'h mm'  },
+        { key:'b',   label:'b mm'  },
+        { key:'tw',  label:'tw mm' },
+        { key:'tf',  label:'tf mm' },
+        { key:'r',   label:'r mm'  },
+        { key:'pml', label:'kg/m'  },
+      ];
+    case 'UPN':
+      return [
+        { key:'h',   label:'h mm'  },
+        { key:'b',   label:'b mm'  },
+        { key:'tw',  label:'tw mm' },
+        { key:'tf',  label:'tf mm' },
+        { key:'pml', label:'kg/m'  },
+      ];
+    case 'Cornière':
+      return [
+        { key:'h',   label:'a mm'  },
+        { key:'b',   label:'b mm'  },
+        { key:'tw',  label:'e mm'  },
+        { key:'pml', label:'kg/m'  },
+      ];
+    case 'Plat':
+      return [
+        { key:'b',   label:'b mm'  },
+        { key:'tw',  label:'e mm'  },
+        { key:'pml', label:'kg/m'  },
+      ];
+    default:
+      return [
+        { key:'h',   label:'h mm'  },
+        { key:'b',   label:'b mm'  },
+        { key:'pml', label:'kg/m'  },
+      ];
+  }
+}
+
+/**
+ * Retourne les dimensions à afficher dans la fiche
+ */
+function _dimsSection(s, famille) {
+  switch (famille) {
+    case 'IPE': case 'HEA': case 'HEB':
+      return [
+        ['h — Hauteur',    (s.h  ||'—')+' mm'],
+        ['b — Largeur aile',(s.b  ||'—')+' mm'],
+        ['tw — Ép. âme',   (s.tw ||'—')+' mm'],
+        ['tf — Ép. aile',  (s.tf ||'—')+' mm'],
+        ['r — Congé',      (s.r  ||'—')+' mm'],
+        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+      ];
+    case 'UPN':
+      return [
+        ['h — Hauteur',    (s.h  ||'—')+' mm'],
+        ['b — Largeur aile',(s.b  ||'—')+' mm'],
+        ['tw — Ép. âme',   (s.tw ||'—')+' mm'],
+        ['tf — Ép. aile',  (s.tf ||'—')+' mm'],
+        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+      ];
+    case 'Cornière':
+      return [
+        ['a — Côté',       (s.h  ||'—')+' mm'],
+        ['e — Épaisseur',  (s.tw ||'—')+' mm'],
+        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+      ];
+    case 'Plat':
+      return [
+        ['b — Largeur',    (s.b  ||'—')+' mm'],
+        ['e — Épaisseur',  (s.tw ||'—')+' mm'],
+        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+      ];
+    default:
+      return [
+        ['h',   (s.h  ||'—')+' mm'],
+        ['b',   (s.b  ||'—')+' mm'],
+        ['kg/m',(s.pml||'—')+' kg/m'],
+      ];
+  }
+}
 
 /**
  * Ouvre la modale fiche détail d'une section

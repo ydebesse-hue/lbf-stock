@@ -250,41 +250,31 @@ header {
 
 .biblio-grille-famille {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 16px 20px;
 }
 
-/* ══ Carte désignation ══ */
+/* ══ Carte famille ══ */
 .biblio-carte {
   background: white;
   border: 1px solid var(--gris-cl);
   border-radius: 4px;
   overflow: hidden;
-  cursor: default;
+  cursor: pointer;
   transition: box-shadow .15s, transform .15s;
 }
 .biblio-carte:hover {
-  box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   transform: translateY(-2px);
 }
 
-.carte-std     { border-top: 3px solid var(--vert); }
-.carte-custom  { border-top: 3px solid #6b21a8; }
-.carte-attente { border: 2px solid var(--or-bord); }
-
 .carte-header {
   background: var(--noir);
-  padding: 8px 10px;
+  padding: 8px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.carte-titre {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
 }
 
 .carte-famille {
@@ -295,49 +285,23 @@ header {
   text-transform: uppercase;
 }
 
-.carte-desig {
-  font-family: Tahoma;
-  font-size: 14px;
-  font-weight: bold;
-  color: rgba(255,255,255,0.8);
-}
-
-/* ── badges ── */
-.badge-std    { background: rgba(45,95,50,0.85);   color: white; font-size: 9px; padding: 2px 5px; border-radius: 2px; font-family: Impact; letter-spacing: .5px; }
-.badge-custom { background: rgba(107,33,168,0.85); color: white; font-size: 9px; padding: 2px 5px; border-radius: 2px; font-family: Impact; letter-spacing: .5px; }
-.badge-attente{ background: var(--or);             color: white; font-size: 9px; padding: 2px 5px; border-radius: 2px; font-family: Impact; letter-spacing: .5px; }
-
-.carte-corps {
+.carte-svg-zone {
+  padding: 12px;
   display: flex;
+  justify-content: center;
   align-items: center;
-  padding: 10px;
-  gap: 8px;
-  border-bottom: 1px solid var(--gris-cl);
   min-height: 80px;
+  border-bottom: 1px solid var(--gris-cl);
 }
 
-.carte-svg svg { display: block; }
-
-.carte-dims-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+.carte-bas {
+  padding: 8px 12px;
+  text-align: center;
 }
 
-.dim-chip {
-  background: var(--gris-bg);
-  border: 1px solid var(--gris-cl);
-  padding: 2px 5px;
-  border-radius: 2px;
-  font-size: 11px;
-  color: #555;
-}
-.dim-chip.poids {
-  background: #e8f0fe;
-  border-color: #a8c4f8;
-  color: #1a56c4;
-  font-weight: bold;
-}
+/* ══ Modale famille ══ */
+.mf-active td { color: white !important; }
+
 
 .carte-footer {
   padding: 7px 10px;
@@ -761,6 +725,47 @@ header {
 <!-- ══════════════════════
      SCRIPTS
 ══════════════════════ -->
+<!-- ══ MODALE FAMILLE ══ -->
+<div id="m-famille" class="modale-bg" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modale modale-xl" onclick="event.stopPropagation()" style="width:860px;">
+
+    <div style="padding:18px 24px 0; display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div class="modale-titre" id="mf-titre" style="margin-bottom:2px;"></div>
+        <div style="font-size:12px; color:#888;" id="mf-norme"></div>
+      </div>
+      <button onclick="document.getElementById('m-famille').classList.remove('open')"
+        style="background:none; border:1px solid #aaa; padding:4px 12px; border-radius:3px; cursor:pointer; font-family:Tahoma; color:#555; flex-shrink:0; margin-left:16px;">✕ Fermer</button>
+    </div>
+
+    <div style="display:flex; gap:20px; padding:16px 24px; flex-wrap:wrap;">
+
+      <!-- Tableau désignations -->
+      <div style="flex:1; min-width:280px; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead id="mf-thead"></thead>
+          <tbody id="mf-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- SVG + dims -->
+      <div style="width:220px; flex-shrink:0;">
+        <div style="background:#f7f7f7; border:1px solid #ddd; border-radius:3px; padding:12px; margin-bottom:10px; text-align:center;">
+          <div style="font-family:Impact; font-size:12px; letter-spacing:1px; color:var(--rouge); text-transform:uppercase; margin-bottom:6px;" id="mf-desig-label">← Sélectionnez une ligne</div>
+          <div id="mf-svg-zone"></div>
+        </div>
+        <div id="mf-dims"></div>
+      </div>
+
+    </div>
+
+    <div style="padding:12px 24px; border-top:1px solid #eee; display:flex; justify-content:flex-end;">
+      <button onclick="document.getElementById('m-famille').classList.remove('open')"
+        class="btn btn-gris">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <script src="../js/supabase.js"></script>
 <script src="../auth/auth.js"></script>
 <script src="../js/bibliotheque.js"></script>
