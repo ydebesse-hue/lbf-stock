@@ -633,6 +633,11 @@ const Stock = (() => {
     if (tpro) tpro.style.display = onglet === 'profils' ? '' : 'none';
     if (ttol) ttol.style.display = onglet === 'toles'   ? '' : 'none';
 
+    // Titre dynamique selon l'onglet
+    document.title = onglet === 'profils'
+      ? 'Stock Profilés — LBF'
+      : 'Stock Tôles — LBF';
+
     _resetFiltres(onglet === 'profils' ? 'toles' : 'profils');
     _filtrer();
   }
@@ -2053,10 +2058,17 @@ const Stock = (() => {
 
   function _erreurChargement(msg) {
     const z = document.getElementById('tableau-stock');
-    if (z) z.innerHTML = `<div class="erreur-chargement">
-      <strong>Erreur de chargement de stock.json</strong><br>${_e(msg)}<br>
-      <small>Vérifiez que Live Server est actif et que data/stock.json est présent.</small>
-    </div>`;
+    if (z) z.innerHTML = `
+      <div class="erreur-chargement">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <strong>Impossible de charger le stock</strong>
+        <p style="margin:10px 0 6px;color:#555">La base de données est inaccessible ou la connexion a échoué.</p>
+        <p style="font-size:12px;color:#aaa;margin-bottom:16px">${_e(msg)}</p>
+        <button onclick="window.location.reload()"
+          style="padding:8px 18px;background:rgb(210,35,42);color:white;border:none;border-radius:3px;cursor:pointer;font-family:Tahoma;font-weight:bold">
+          🔄 Réessayer
+        </button>
+      </div>`;
   }
 
 
