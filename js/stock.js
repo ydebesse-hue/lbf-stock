@@ -420,12 +420,12 @@ const Stock = (() => {
         h += `<td class="td-id"><span class="chip-id">${_e(b.id)}</span></td>`;
         h += `<td><strong>${_e(b.section_type)}</strong></td>`;
         h += `<td>${_e(b.designation)}
-          <button class="btn-inline" onclick="Stock.ouvrirFicheSection('${_e(b.section_type)}','${_e(b.designation)}')" title="Fiche section">voir</button>
+          <button class="btn-inline" onclick="Stock.ouvrirFicheSection('${_e(b.section_type)}','${_e(b.designation)}')" title="Fiche section">🔍</button>
         </td>`;
         h += `<td>${b.longueur_m.toFixed(2)}</td>`;
         h += `<td>${poids}</td>`;
         h += `<td>${_e(b.lieu_stockage)}
-          <button class="btn-inline btn-inline-carte" onclick="_ouvrirCarte('${_e(b.lieu_stockage)}')" title="Voir sur le plan">carte</button>
+          <button class="btn-inline btn-inline-carte" onclick="_ouvrirCarte('${_e(b.lieu_stockage)}')" title="Voir sur le plan">📍</button>
         </td>`;
         h += `<td>${dateAjout}</td>`;
         h += `<td>${_e(b.chantier_origine)}${b.chantier_affectation
@@ -481,7 +481,7 @@ const Stock = (() => {
         h += `<td>${t.quantite} pièce${t.quantite > 1 ? 's' : ''}</td>`;
         h += `<td>${t.poids_unitaire_kg.toFixed(1)} <span style="color:#999;font-size:11px">(tot.&nbsp;${t.poids_total_kg.toFixed(1)})</span></td>`;
         h += `<td>${_e(t.lieu_stockage)}
-          <button class="btn-inline btn-inline-carte" onclick="_ouvrirCarte('${_e(t.lieu_stockage)}')" title="Voir sur le plan">carte</button>
+          <button class="btn-inline btn-inline-carte" onclick="_ouvrirCarte('${_e(t.lieu_stockage)}')" title="Voir sur le plan">📍</button>
         </td>`;
         h += `<td>${dateAjout}</td>`;
         h += `<td>${_e(t.chantier_origine)}${t.chantier_affectation
@@ -511,9 +511,7 @@ const Stock = (() => {
   }
 
   function _actionsLigneProfil(b, modif, admin) {
-    let h = `<button class="btn-ligne btn-detail"
-      onclick="Stock.ouvrirFicheSection('${_e(b.section_type)}','${_e(b.designation)}')"
-      title="Voir la fiche section">🔍</button>`;
+    let h = '';
 
     if (b.statut === 'en_attente' && admin) {
       // Admin : boutons valider / refuser sur ajout en attente
@@ -543,9 +541,7 @@ const Stock = (() => {
   }
 
   function _actionsLigneTole(t, modif, admin) {
-    let h = `<button class="btn-ligne btn-detail"
-      onclick="Stock.ouvrirDetailTole('${t.id}')"
-      title="Voir les détails">🔍</button>`;
+    let h = '';
 
     if (t.statut === 'en_attente' && admin) {
       h += ` <button class="btn-ligne btn-valider" onclick="Stock.validerElement('${t.id}')" title="Valider">✔</button>`;
