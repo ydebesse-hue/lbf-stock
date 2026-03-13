@@ -46,7 +46,7 @@
       z-index: 100;
     }
 
-    .logo-zone { display: flex; align-items: center; gap: 10px; }
+    .logo-zone { display: flex; align-items: center; gap: 14px; flex: 1; }
     .logo-zone img { height: 42px; }
 
     .app-title {
@@ -55,6 +55,9 @@
       font-size: 18px;
       letter-spacing: 2px;
       text-transform: uppercase;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
     }
     .app-title span { color: var(--rouge); }
 
@@ -646,9 +649,9 @@
   <!-- ── HEADER ──────────────────────────────────────────────── -->
   <header>
     <div class="logo-zone">
-      <img src="../assets/Logo_LBF.png" alt="Le Bras Frères" onerror="this.style.display='none'">
-      <div class="app-title">Stock <span>Métallerie</span></div>
+      <img src="../assets/Logo_LBF2.png" alt="Le Bras Frères" onerror="this.style.display='none'">
     </div>
+    <div class="app-title">Stock <span>Métallerie</span></div>
     <div class="header-droite">
       <span id="header-badge" class="badge-profil"></span>
       <span id="header-user"></span>
