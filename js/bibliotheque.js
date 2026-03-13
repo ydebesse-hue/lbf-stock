@@ -69,21 +69,19 @@ function biblioRendreGrille() {
   // Construire la liste des familles disponibles
   const familles = {};
   Biblio.data.standard.forEach(fam => {
-    // Filtre famille
     if (Biblio.filtres.famille && fam.famille !== Biblio.filtres.famille) return;
-    // Filtre recherche
     if (Biblio.filtres.recherche) {
       const match = fam.sections.some(s =>
-        `${fam.famille} ${s.desig}`.toLowerCase().includes(Biblio.filtres.recherche)
+        `${fam.famille} ${s.desig} ${s.serie||''}`.toLowerCase().includes(Biblio.filtres.recherche)
       );
       if (!match) return;
     }
     familles[fam.famille] = {
-      famille: fam.famille,
-      norme:   fam.norme,
-      source:  'standard',
+      famille:  fam.famille,
+      norme:    fam.norme,
+      source:   'standard',
       sections: fam.sections,
-      statut:  'valide'
+      statut:   'valide'
     };
   });
 
@@ -107,7 +105,6 @@ function biblioRendreGrille() {
   }
 
   conteneur.innerHTML = '';
-
   Object.values(familles).forEach(fam => {
     conteneur.appendChild(biblioCreerCarteFamille(fam));
   });
@@ -304,20 +301,28 @@ function biblioOuvrirModaleFamille(nomFamille) {
   const m = document.getElementById('m-famille');
   if (!m) return;
 
-  // Trouver la famille dans les données
-  const famStd = Biblio.data.standard.find(f => f.famille === nomFamille);
+  const famStd   = Biblio.data.standard.find(f => f.famille === nomFamille);
   const sections = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === nomFamille);
   const norme    = famStd ? famStd.norme : '';
 
-  m.querySelector('#mf-titre').textContent     = nomFamille;
-  m.querySelector('#mf-norme').textContent     = norme;
-  m.querySelector('#mf-svg-zone').innerHTML    = biblioSvgCote({ famille: nomFamille, ...sections[0] }, 200, 180);
-  m.querySelector('#mf-dims').innerHTML        = '';
+  m.querySelector('#mf-titre').textContent  = nomFamille;
+  m.querySelector('#mf-norme').textContent  = norme;
+  m.querySelector('#mf-dims').innerHTML     = '';
   m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
 
-  // Construire le tableau
+  // SVG initial avec la première section
+  if (sections.length) {
+    m.querySelector('#mf-svg-zone').innerHTML = biblioSvgCote({ famille: nomFamille, ...sections[0] }, 200, 180);
+  }
+
+  // Colonnes du tableau
   const colonnes = _colonnesFamille(nomFamille);
+  const avecSerie = sections.some(s => s.serie);
+
   let thead = '<tr style="background:rgb(30,30,35);">';
+  if (avecSerie) {
+    thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 8px;text-align:left;">Série</th>';
+  }
   thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 10px;text-align:left;">Désig.</th>';
   colonnes.forEach(c => {
     thead += `<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 6px;text-align:right;">${c.label}</th>`;
@@ -326,20 +331,20 @@ function biblioOuvrirModaleFamille(nomFamille) {
 
   let tbody = '';
   sections.forEach((s, i) => {
-    tbody += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig('${nomFamille}',${i})" style="border-bottom:1px solid #eee;cursor:pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="if(!this.classList.contains('mf-active'))this.style.background=''">`;
-    tbody += `<td style="padding:7px 10px;font-weight:bold;">${s.desig}</td>`;
+    tbody += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig('${nomFamille}',${i})" style="border-bottom:1px solid #eee;cursor:pointer;" onmouseover="if(!this.classList.contains('mf-active'))this.style.background='#fafafa'" onmouseout="if(!this.classList.contains('mf-active'))this.style.background=''">`;
+    if (avecSerie) {
+      tbody += `<td style="padding:6px 8px;font-size:11px;color:#888;">${s.serie || '—'}</td>`;
+    }
+    tbody += `<td style="padding:6px 10px;font-weight:bold;">${s.desig}</td>`;
     colonnes.forEach(c => {
-      tbody += `<td style="padding:7px 6px;text-align:right;color:#555;">${s[c.key] !== undefined ? s[c.key] : '—'}</td>`;
+      tbody += `<td style="padding:6px;text-align:right;color:#555;">${s[c.key] !== undefined ? s[c.key] : '—'}</td>`;
     });
     tbody += '</tr>';
   });
 
   m.querySelector('#mf-thead').innerHTML = thead;
   m.querySelector('#mf-tbody').innerHTML = tbody;
-
-  // Mémoriser la famille active
   m.dataset.famille = nomFamille;
-
   m.classList.add('open');
 }
 
@@ -383,7 +388,7 @@ function biblioSelectionnerDesig(nomFamille, idx) {
  */
 function _colonnesFamille(famille) {
   switch (famille) {
-    case 'IPE': case 'HEA': case 'HEB':
+    case 'Profilés I':
       return [
         { key:'h',   label:'h mm'  },
         { key:'b',   label:'b mm'  },
@@ -392,7 +397,16 @@ function _colonnesFamille(famille) {
         { key:'r',   label:'r mm'  },
         { key:'pml', label:'kg/m'  },
       ];
-    case 'UPN':
+    case 'Profilés H':
+      return [
+        { key:'h',   label:'h mm'  },
+        { key:'b',   label:'b mm'  },
+        { key:'tw',  label:'tw mm' },
+        { key:'tf',  label:'tf mm' },
+        { key:'r',   label:'r mm'  },
+        { key:'pml', label:'kg/m'  },
+      ];
+    case 'Profilés U':
       return [
         { key:'h',   label:'h mm'  },
         { key:'b',   label:'b mm'  },
@@ -427,40 +441,41 @@ function _colonnesFamille(famille) {
  */
 function _dimsSection(s, famille) {
   switch (famille) {
-    case 'IPE': case 'HEA': case 'HEB':
+    case 'Profilés I': case 'Profilés H':
       return [
-        ['h — Hauteur',    (s.h  ||'—')+' mm'],
+        ['h — Hauteur',     (s.h  ||'—')+' mm'],
         ['b — Largeur aile',(s.b  ||'—')+' mm'],
-        ['tw — Ép. âme',   (s.tw ||'—')+' mm'],
-        ['tf — Ép. aile',  (s.tf ||'—')+' mm'],
-        ['r — Congé',      (s.r  ||'—')+' mm'],
-        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+        ['tw — Ép. âme',    (s.tw ||'—')+' mm'],
+        ['tf — Ép. aile',   (s.tf ||'—')+' mm'],
+        ['r — Congé',       (s.r  ||'—')+' mm'],
+        ['Poids/ml',        (s.pml||'—')+' kg/m'],
       ];
-    case 'UPN':
+    case 'Profilés U':
       return [
-        ['h — Hauteur',    (s.h  ||'—')+' mm'],
+        ['h — Hauteur',     (s.h  ||'—')+' mm'],
         ['b — Largeur aile',(s.b  ||'—')+' mm'],
-        ['tw — Ép. âme',   (s.tw ||'—')+' mm'],
-        ['tf — Ép. aile',  (s.tf ||'—')+' mm'],
-        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+        ['tw — Ép. âme',    (s.tw ||'—')+' mm'],
+        ['tf — Ép. aile',   (s.tf ||'—')+' mm'],
+        ['Poids/ml',        (s.pml||'—')+' kg/m'],
       ];
     case 'Cornière':
       return [
-        ['a — Côté',       (s.h  ||'—')+' mm'],
-        ['e — Épaisseur',  (s.tw ||'—')+' mm'],
-        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+        ['a — Grand côté',  (s.h  ||'—')+' mm'],
+        ['b — Petit côté',  (s.b  ||'—')+' mm'],
+        ['e — Épaisseur',   (s.tw ||'—')+' mm'],
+        ['Poids/ml',        (s.pml||'—')+' kg/m'],
       ];
     case 'Plat':
       return [
-        ['b — Largeur',    (s.b  ||'—')+' mm'],
-        ['e — Épaisseur',  (s.tw ||'—')+' mm'],
-        ['Poids/ml',       (s.pml||'—')+' kg/m'],
+        ['b — Largeur',     (s.b  ||'—')+' mm'],
+        ['e — Épaisseur',   (s.tw ||'—')+' mm'],
+        ['Poids/ml',        (s.pml||'—')+' kg/m'],
       ];
     default:
       return [
-        ['h',   (s.h  ||'—')+' mm'],
-        ['b',   (s.b  ||'—')+' mm'],
-        ['kg/m',(s.pml||'—')+' kg/m'],
+        ['h',               (s.h  ||'—')+' mm'],
+        ['b',               (s.b  ||'—')+' mm'],
+        ['kg/m',            (s.pml||'—')+' kg/m'],
       ];
   }
 }
@@ -769,19 +784,19 @@ function biblioSvgMini(famille, w, h) {
   const cx = w / 2, cy = h / 2;
 
   switch (famille) {
-    case 'IPE':
+    case 'Profilés I':
       formes = `
         <rect x="${cx-22}" y="4"       width="44" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-22}" y="${h-12}" width="44" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-4}"  y="12"      width="8"  height="${h-24}" fill="${F}" stroke="${S}" stroke-width="1.2"/>`;
       break;
-    case 'HEA': case 'HEB':
+    case 'Profilés H':
       formes = `
         <rect x="${cx-30}" y="4"       width="60" height="9"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-30}" y="${h-13}" width="60" height="9"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-5}"  y="13"      width="10" height="${h-26}" fill="${F}" stroke="${S}" stroke-width="1.2"/>`;
       break;
-    case 'UPN':
+    case 'Profilés U':
       formes = `
         <rect x="${cx-25}" y="4"       width="50" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-25}" y="${h-12}" width="50" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
@@ -843,7 +858,7 @@ function biblioSvgCote(section, w, h) {
     ${texte(lx, ly, lbl, 'middle', rot)}`;
 
   switch (section.famille) {
-    case 'IPE': case 'HEA': case 'HEB': {
+    case 'Profilés I': case 'Profilés H': {
       const bw = section.famille === 'IPE' ? 90 : 110;
       const ox = (w - bw) / 2;
       const th = section.famille === 'HEB' ? 18 : 13;
@@ -863,7 +878,7 @@ function biblioSvgCote(section, w, h) {
       inner += fleche(ox, h - 5, ox + bw, h - 5, 'b', ox + bw / 2, h - 1);
       break;
     }
-    case 'UPN': {
+    case 'Profilés U': {
       const bw = 80, bh = h - 36;
       const ox = (w - bw) / 2;
       inner += e('rect', { x: ox, y: 18, width: bw, height: 12, fill: F, stroke: S, 'stroke-width': 1.5 });
@@ -928,7 +943,7 @@ function nsChampsDims(famille) {
     </div>`;
 
   switch (famille) {
-    case 'IPE': case 'HEA': case 'HEB':
+    case 'Profilés I': case 'Profilés H':
       return f('h','h — Hauteur (mm)','200')
            + f('b','b — Largeur aile (mm)','100')
            + f('tw','tw — Ép. âme (mm)','5.6')
@@ -936,7 +951,7 @@ function nsChampsDims(famille) {
            + f('r','r — Congé (mm)','12')
            + f('pml','Poids/ml (kg/m)','22.4');
 
-    case 'UPN':
+    case 'Profilés U':
       return f('h','h — Hauteur (mm)','120')
            + f('b','b — Largeur (mm)','55')
            + f('tw','tw — Ép. âme (mm)','7')
