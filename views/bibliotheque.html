@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LBF — Bibliothèque de sections</title>
+<title>Bibliothèque — LBF</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSJyZ2IoMzAsMzAsMzUpIi8+CiAgPHJlY3QgeD0iNCIgeT0iMTQiIHdpZHRoPSIyNCIgaGVpZ2h0PSI0IiBmaWxsPSJyZ2IoMjEwLDM1LDQyKSIvPgogIDxyZWN0IHg9IjQiIHk9IjgiIHdpZHRoPSI4IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMjEwLDM1LDQyKSIvPgo8L3N2Zz4=">
 <style>
 /* ══════════════════════════════════════════════
    VARIABLES & RESET
@@ -765,6 +766,7 @@ header {
 <!-- ══════════════════════
      SCRIPTS
 ══════════════════════ -->
+<script src="../js/supabase.js"></script>
 <script src="../auth/auth.js"></script>
 <script src="../js/bibliotheque.js"></script>
 <script>
@@ -846,6 +848,11 @@ function retourAccueil() {
 function switchOnglet(onglet, btn) {
   document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
+
+  // Titre dynamique
+  document.title = onglet === 'toles'
+    ? 'Bibliothèque Tôles — LBF'
+    : 'Bibliothèque Profilés — LBF';
 
   if (onglet === 'toles') {
     document.getElementById('biblio-grille').innerHTML = `
