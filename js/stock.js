@@ -840,11 +840,11 @@ const Stock = (() => {
     }
 
     // ── Modale suppression ────────────────────────────────────
-    const mMod = document.getElementById('m-modification');
-    if (mMod) {
-      const btnSup = mMod.querySelector('.btn-supprimer-barre');
+    const mModSup = document.getElementById('m-modification');
+    if (mModSup) {
+      const btnSup = mModSup.querySelector('.btn-supprimer-barre');
       if (btnSup) btnSup.addEventListener('click', () => {
-        const id = mMod.dataset.idEnCours;
+        const id = mModSup.dataset.idEnCours;
         if (id) _ouvrirConfirmationSuppression(id);
       });
     }
