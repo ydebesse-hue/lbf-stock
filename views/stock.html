@@ -484,9 +484,17 @@
       transition: opacity .15s;
     }
     .btn-modale:hover { opacity: .85; }
-    .btn-modale-rouge { background: var(--rouge); color: white; }
-    .btn-modale-gris  { background: #e0e0e0;      color: var(--noir); }
-    .btn-modale-vert  { background: var(--vert);  color: white; }
+    .btn-modale-rouge    { background: var(--rouge); color: white; }
+    .btn-modale-gris     { background: #e0e0e0;      color: var(--noir); }
+    .btn-modale-vert     { background: var(--vert);  color: white; }
+    .btn-modale-supprimer {
+      background: none;
+      border: 1px solid #ccc;
+      color: #888;
+      font-size: 12px;
+      padding: 6px 11px;
+    }
+    .btn-modale-supprimer:hover { background: #fde8e8; border-color: var(--rouge); color: var(--rouge); }
 
     /* Note de statut (en_attente ou direct) */
     .note-statut {
@@ -810,6 +818,21 @@
         </div>
       </div>
 
+      <!-- ID généré — affiché dès la sélection de la désignation -->
+      <div id="ap-zone-id" style="display:none; margin-bottom:10px;">
+        <div style="background:var(--noir); color:white; border-radius:3px;
+                    padding:10px 14px; display:flex; align-items:center; gap:12px;">
+          <span style="font-size:11px; color:#aaa; text-transform:uppercase;
+                       letter-spacing:.5px; white-space:nowrap;">ID barre</span>
+          <span id="ap-id-genere"
+                style="font-family:Impact,sans-serif; font-size:22px;
+                       letter-spacing:2px; color:var(--rouge);">—</span>
+          <span style="font-size:11px; color:#888; margin-left:auto;">
+            📋 Notez cet ID sur l'étiquette de la barre
+          </span>
+        </div>
+      </div>
+
       <!-- Schéma SVG + dimensions (affiché après sélection désignation) -->
       <div id="ap-schema" class="schema-zone" style="display:none">
         <div class="schema-svg-zone" id="ap-visuel">
@@ -1098,7 +1121,18 @@
       <div class="mod-note-statut note-statut note-statut-attente"></div>
 
       <div class="modale-footer">
-        <button class="btn-modale btn-modale-gris" onclick="document.getElementById('m-modification').classList.remove('open'); document.querySelector('.mod-zone-profil').style.display=''; document.querySelector('.mod-zone-tole').style.display='none'">Annuler</button>
+        <!-- Bouton supprimer — Gestion et Admin — à gauche -->
+        <button class="btn-modale btn-modale-supprimer btn-supprimer-barre"
+                data-require="can_edit"
+                style="margin-right:auto;">
+          🗑 Supprimer
+        </button>
+        <button class="btn-modale btn-modale-gris"
+                onclick="document.getElementById('m-modification').classList.remove('open');
+                         document.querySelector('.mod-zone-profil').style.display='';
+                         document.querySelector('.mod-zone-tole').style.display='none'">
+          Annuler
+        </button>
         <button class="btn-modale btn-modale-vert btn-soumettre">Enregistrer la modification</button>
       </div>
     </div>
@@ -1340,6 +1374,30 @@
       <div class="modale-footer">
         <button class="btn-modale btn-modale-gris btn-annuler-refus">Annuler</button>
         <button class="btn-modale btn-modale-rouge btn-confirmer-refus">✘ Confirmer le refus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MODALE — CONFIRMATION SUPPRESSION
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="m-supprimer" class="modale-bg" role="dialog" aria-modal="true" aria-label="Confirmer la suppression">
+    <div class="modale">
+      <div class="modale-titre" style="color:var(--rouge)">🗑 Supprimer cet élément</div>
+
+      <div id="sup-info-barre"
+           style="background:#fde8e8; border:1px solid var(--rouge); border-radius:3px;
+                  padding:10px 14px; margin-bottom:14px; font-size:13px; color:var(--rouge);">
+        —
+      </div>
+
+      <p style="font-size:13px; color:#555; margin-bottom:14px;">
+        Cette action est <strong>irréversible</strong>. L'élément sera définitivement retiré du stock.
+      </p>
+
+      <div class="modale-footer">
+        <button class="btn-modale btn-modale-gris btn-annuler-sup">Annuler</button>
+        <button class="btn-modale btn-modale-rouge btn-confirmer-sup">🗑 Confirmer la suppression</button>
       </div>
     </div>
   </div>

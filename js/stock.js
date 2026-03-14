@@ -838,6 +838,24 @@ const Stock = (() => {
       if (btnConfirmer) btnConfirmer.addEventListener('click', _confirmerRefus);
       if (btnAnnuler)   btnAnnuler.addEventListener('click',   () => _fermerModale('m-confirmation'));
     }
+
+    // ── Modale suppression ────────────────────────────────────
+    const mMod = document.getElementById('m-modification');
+    if (mMod) {
+      const btnSup = mMod.querySelector('.btn-supprimer-barre');
+      if (btnSup) btnSup.addEventListener('click', () => {
+        const id = mMod.dataset.idEnCours;
+        if (id) _ouvrirConfirmationSuppression(id);
+      });
+    }
+
+    const mSup = document.getElementById('m-supprimer');
+    if (mSup) {
+      const btnConfirmer = mSup.querySelector('.btn-confirmer-sup');
+      const btnAnnuler   = mSup.querySelector('.btn-annuler-sup');
+      if (btnConfirmer) btnConfirmer.addEventListener('click', _confirmerSuppression);
+      if (btnAnnuler)   btnAnnuler.addEventListener('click',   () => _fermerModale('m-supprimer'));
+    }
   }
 
 
@@ -864,9 +882,12 @@ const Stock = (() => {
     // Pré-remplir les lieux
     _remplirSelectLieux(m.querySelector('#ap-lieu'));
 
-    // Cacher le schéma
+    // Cacher le schéma et la zone ID
     const schema = m.querySelector('#ap-schema');
     if (schema) schema.style.display = 'none';
+    const zoneId = document.getElementById('ap-zone-id');
+    if (zoneId) zoneId.style.display = 'none';
+    delete m.dataset.idPrevu;
 
     // Reset désignations
     const selDesig = m.querySelector('#ap-desig');
@@ -1003,6 +1024,16 @@ const Stock = (() => {
 
     // Recalcul poids barre
     _apMajPoids(m);
+
+    // Afficher l'ID généré si c'est la modale d'ajout (pas de modification)
+    const zoneId  = document.getElementById('ap-zone-id');
+    const spanId  = document.getElementById('ap-id-genere');
+    if (zoneId && spanId && m.id === 'm-ajout-profil') {
+      const nouvelId = _genererIdBarre();
+      spanId.textContent    = nouvelId;
+      m.dataset.idPrevu     = nouvelId; // mémorisé pour la soumission
+      zoneId.style.display  = 'block';
+    }
   }
 
   /**
@@ -1052,7 +1083,8 @@ const Stock = (() => {
     const poidsml = parseFloat(m.dataset.poidsml) || 0;
     const poidsBarre = poidsml > 0 ? Math.round(longueur * poidsml * 10) / 10 : null;
 
-    const nouvelleId = _genererIdBarre();
+    // Utiliser l'ID déjà affiché à l'opérateur — sinon en générer un nouveau
+    const nouvelleId = m.dataset.idPrevu || _genererIdBarre();
 
     /** @type {Object} Structure identique à stock.json */
     const barre = {
@@ -2226,6 +2258,75 @@ const Stock = (() => {
 
   // Exposer _ouvrirCarte globalement (appelée depuis le HTML généré)
   window._ouvrirCarte = _ouvrirCarte;
+
+  /* ──────────────────────────────────────────────────────────────
+     SUPPRESSION D'UNE BARRE
+     ────────────────────────────────────────────────────────────── */
+
+  /**
+   * Ouvre la modale de confirmation de suppression
+   * @param {string} id — BAR-XXXX ou TOL-XXXX
+   */
+  function _ouvrirConfirmationSuppression(id) {
+    const el = _parId(id);
+    if (!el) return;
+
+    // Remplir le résumé de la barre
+    const info = document.getElementById('sup-info-barre');
+    if (info) {
+      if (el.categorie === 'profil') {
+        info.innerHTML = `<strong>${_e(el.id)}</strong> — ${_e(el.section_type)} ${_e(el.designation)} · ${el.longueur_m.toFixed(2)} m · ${_e(el.lieu_stockage)}`;
+      } else {
+        info.innerHTML = `<strong>${_e(el.id)}</strong> — Tôle ${el.epaisseur_mm} mm · ${el.largeur_mm}×${el.longueur_mm} mm · ${el.quantite} pièce(s) · ${_e(el.lieu_stockage)}`;
+      }
+    }
+
+    // Mémoriser l'ID pour la confirmation
+    const mSup = document.getElementById('m-supprimer');
+    if (mSup) mSup.dataset.idEnCours = id;
+
+    // Fermer la modale modification et ouvrir la confirmation
+    _fermerModale('m-modification');
+    _ouvrirModale('m-supprimer');
+  }
+
+  /**
+   * Exécute la suppression après confirmation
+   */
+  async function _confirmerSuppression() {
+    const mSup = document.getElementById('m-supprimer');
+    if (!mSup) return;
+
+    const id = mSup.dataset.idEnCours;
+    if (!id) return;
+
+    // Supprimer de Supabase
+    try {
+      await window.SB.supprimer('stock', id);
+    } catch(e) {
+      console.warn('[Stock] Supabase indisponible, suppression locale :', e);
+      // Fallback : marquer comme "refuse" en localStorage pour simuler la suppression
+      const local = _chargerLocal();
+      const idx = local.barres.findIndex(b => b.id === id);
+      if (idx !== -1) {
+        local.barres.splice(idx, 1);
+      } else {
+        // Marquer pour exclusion si la barre vient de stock.json
+        local.barres.push({ id, _supprime: true });
+      }
+      _sauvegarderLocal(local);
+    }
+
+    // Supprimer de _data en mémoire
+    _data.barres = _data.barres.filter(b => b.id !== id);
+
+    _fermerModale('m-supprimer');
+    _peuplerFiltres();
+    _filtrer();
+    _majAlerteAttente();
+    _notif(`Élément ${id} supprimé du stock`, 'succes');
+  }
+
 
   /* ──────────────────────────────────────────────────────────────
      ZOOM IMAGE FICHE SECTION
