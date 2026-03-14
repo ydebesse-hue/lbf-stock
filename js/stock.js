@@ -900,11 +900,21 @@ const Stock = (() => {
       return;
     }
 
-    // Chercher les désignations dans sections.json ou dans le stock existant
+    // Chercher les désignations dans sections.json — taille seule (ex: "140", "200")
+    // sections.json stocke desig = "IPE A 140" → on extrait la partie après la série
     let desigs = [];
     if (_sections) {
-      const famille = _sections.standard.find(f => f.famille === type);
-      if (famille) desigs = famille.sections.map(s => s.desig);
+      _sections.standard.forEach(f => {
+        f.sections.forEach(s => {
+          if (s.serie === type) {
+            // Extraire la taille : supprimer le préfixe série + espace
+            const taille = s.desig.startsWith(type + ' ')
+              ? s.desig.slice(type.length + 1)
+              : s.desig;
+            if (!desigs.includes(taille)) desigs.push(taille);
+          }
+        });
+      });
     }
 
     if (!desigs.length) {
@@ -913,7 +923,7 @@ const Stock = (() => {
         _data.barres
           .filter(b => b.categorie === 'profil' && b.section_type === type)
           .map(b => b.designation)
-      )].sort();
+      )].sort((a, b) => parseFloat(a) - parseFloat(b));
     }
 
     desigs.forEach(d => {
@@ -1526,40 +1536,25 @@ const Stock = (() => {
     /* Image de la section — avec fallback SVG si fichier absent */
     const zoneVisuel = m.querySelector('#fiche-visuel');
     if (zoneVisuel) {
-      // Identifier la série depuis la désignation
-      // Les désignations suivent le format de sections.json : "IPE 240", "IPE A 140", "HEA A 100", "L 40×40×4"
-      // On teste les préfixes du plus long au plus court pour éviter "IPE" de matcher "IPE A"
-      const SERIES_IMAGES = [
-        { prefixe: 'IPE A',   fichier: 'IPEA.png'   },
-        { prefixe: 'IPE O',   fichier: 'IPEO.png'   },
-        { prefixe: 'IPE 750', fichier: 'IPE750.png' },
-        { prefixe: 'IPE',     fichier: 'IPE.png'    },
-        { prefixe: 'IPN',     fichier: 'IPN.png'    },
-        { prefixe: 'HEA A',   fichier: 'HEAA.png'   },
-        { prefixe: 'HEA',     fichier: 'HEA.png'    },
-        { prefixe: 'HEB',     fichier: 'HEB.png'    },
-        { prefixe: 'HEM',     fichier: 'HEM.png'    },
-        { prefixe: 'UPN',     fichier: 'UPN.png'    },
-        { prefixe: 'UPE',     fichier: 'UPE.png'    },
-        // Cornière : "L 40×40×4" (égale) ou "L 60×40×5" (inégale)
-        // Détection : après "L ", comparer les deux premières dimensions
-        { prefixe: 'L ',      fichier: null          }, // traité séparément
-      ];
+      // type = série directe (ex: "IPE", "IPE A", "HEA A", "L égale"...)
+      // Correspondance série → fichier image dans assets/profils/
+      const SERIES_IMAGES = {
+        'IPE':       'IPE.png',
+        'IPE A':     'IPEA.png',
+        'IPE O':     'IPEO.png',
+        'IPE 750':   'IPE750.png',
+        'IPN':       'IPN.png',
+        'HEA':       'HEA.png',
+        'HEA A':     'HEAA.png',
+        'HEB':       'HEB.png',
+        'HEM':       'HEM.png',
+        'UPN':       'UPN.png',
+        'UPE':       'UPE.png',
+        'L égale':   'Le.png',
+        'L inégale': 'Li.png',
+      };
 
-      let nomFichier = null;
-      for (const s of SERIES_IMAGES) {
-        if (desig.startsWith(s.prefixe)) {
-          if (s.prefixe === 'L ') {
-            // Cornière — extraire les dimensions après "L "
-            const dims = desig.slice(2).replace(/[×xX]/g, '×').split('×');
-            const estEgale = dims.length >= 2 && dims[0].trim() === dims[1].trim();
-            nomFichier = estEgale ? 'Le.png' : 'Li.png';
-          } else {
-            nomFichier = s.fichier;
-          }
-          break;
-        }
-      }
+      const nomFichier = SERIES_IMAGES[type] || null;
 
       const img   = zoneVisuel.querySelector('#fiche-img');
       const svgEl = zoneVisuel.querySelector('#fiche-svg');
@@ -1964,17 +1959,23 @@ const Stock = (() => {
   function _remplirSelectType(sel) {
     if (!sel) return;
     sel.innerHTML = '<option value="">— Choisir —</option>';
-    let types = [];
+    let series = [];
 
     if (_sections?.standard) {
-      types = _sections.standard.map(f => f.famille);
+      // Extraire toutes les séries uniques toutes familles confondues
+      // ex : "IPE", "IPE A", "IPE O", "IPN", "HEA", "HEA A", "HEB", "HEM"...
+      _sections.standard.forEach(f => {
+        f.sections.forEach(s => {
+          if (!series.includes(s.serie)) series.push(s.serie);
+        });
+      });
     } else if (_data?.barres) {
-      types = [...new Set(_data.barres
+      series = [...new Set(_data.barres
         .filter(b => b.categorie === 'profil')
         .map(b => b.section_type))].sort();
     }
 
-    types.forEach(t => {
+    series.forEach(t => {
       const o = document.createElement('option');
       o.value = t; o.textContent = t;
       sel.appendChild(o);
@@ -2003,9 +2004,14 @@ const Stock = (() => {
    */
   function _getDims(type, desig) {
     if (!_sections?.standard) return null;
-    const famille = _sections.standard.find(f => f.famille === type);
-    if (!famille) return null;
-    return famille.sections.find(s => s.desig === desig) || null;
+    // type = série (ex: "IPE A"), desig = taille (ex: "140")
+    // sections.json stocke desig complet = "IPE A 140"
+    const desigComplete = `${type} ${desig}`;
+    for (const famille of _sections.standard) {
+      const section = famille.sections.find(s => s.serie === type && s.desig === desigComplete);
+      if (section) return section;
+    }
+    return null;
   }
 
   /**
