@@ -519,142 +519,133 @@ header {
 .d-custom { background: #f3e8ff; color: #6b21a8; border: 1px solid #6b21a8; }
 
 /* ══════════════════════════════════════════════
-   CARTES FAMILLE — nouveau design
+   GRILLE PRINCIPALE
 ══════════════════════════════════════════════ */
 
-/* Grille principale : 4 cartes max sur une ligne */
 #biblio-grille {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
   padding: 4px 0;
 }
 
-.biblio-carte-famille {
-  background: white;
-  border-radius: 6px;
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  transition: box-shadow .18s, transform .18s;
-  border: 1px solid var(--gris-cl);
+/* Séparateur famille */
+.biblio-sep-famille {
   display: flex;
-  flex-direction: column;
-}
-.biblio-carte-famille:hover {
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-  transform: translateY(-3px);
-}
-
-/* En-tête carte famille */
-.cfam-header {
-  background: var(--noir);
-  padding: 12px 14px 10px;
-  border-bottom: 3px solid var(--rouge);
-}
-.cfam-titre {
-  font-family: Impact, sans-serif;
-  font-size: 22px;
-  letter-spacing: 2px;
-  color: white;
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-.cfam-sous-titre {
-  font-size: 11px;
-  color: rgba(255,255,255,0.55);
-  margin-top: 2px;
-  letter-spacing: .5px;
-}
-
-/* Zone image / SVG */
-.cfam-visuel {
-  position: relative;
-  background: #f5f6f7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 130px;
-  overflow: hidden;
-  flex: 1;
-}
-
-/* Image réelle (quand disponible) */
-.cfam-visuel img.cfam-photo {
-  width: 100%;
-  height: 130px;
-  object-fit: cover;
-  display: block;
-}
-
-/* Placeholder SVG (avant photo réelle) */
-.cfam-visuel .cfam-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 130px;
-  background: linear-gradient(145deg, #e8ecf0 0%, #d8dfe6 100%);
-}
-.cfam-placeholder-label {
-  font-size: 10px;
-  color: #aaa;
-  margin-top: 6px;
-  font-style: italic;
-  letter-spacing: .5px;
-}
-
-/* Multi-schémas dans le placeholder */
-.cfam-schemas {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: baseline;
   gap: 12px;
-  padding: 10px;
+  padding: 16px 2px 8px;
+  border-bottom: 2px solid var(--noir);
+  margin-bottom: 12px;
+  margin-top: 20px;
 }
-.cfam-schema-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-.cfam-schema-label {
-  font-size: 9px;
-  color: #777;
-  font-family: Tahoma;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-}
+.biblio-sep-famille:first-child { margin-top: 4px; }
 
-/* Pied de carte */
-.cfam-footer {
-  padding: 10px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid var(--gris-cl);
-  background: #fafafa;
-}
-.cfam-norme {
-  font-size: 10px;
-  color: var(--vert);
-  font-weight: bold;
+.bsf-titre {
+  font-family: Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  letter-spacing: .5px;
+  color: var(--noir);
 }
-.cfam-count {
+.bsf-norme {
   font-size: 11px;
   color: #999;
+  letter-spacing: .5px;
 }
-.cfam-fleche {
-  font-size: 14px;
-  color: var(--rouge);
+
+/* Grille des cartes série */
+.biblio-grille-series {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 /* ══════════════════════════════════════════════
-   CARROUSEL PHOTOS
+   CARTE SÉRIE
+══════════════════════════════════════════════ */
+.biblio-carte-serie {
+  background: white;
+  border: 1px solid var(--gris-cl);
+  border-top: 3px solid var(--rouge);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: box-shadow .15s, transform .15s;
+  display: flex;
+  flex-direction: column;
+}
+.biblio-carte-serie:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.13);
+  transform: translateY(-2px);
+}
+
+/* En-tête carte série */
+.cs-header {
+  background: var(--noir);
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cs-titre {
+  font-family: Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: 1.5px;
+  color: white;
+  text-transform: uppercase;
+}
+.cs-count {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+}
+
+/* Zone visuelle */
+.cs-visuel {
+  height: 130px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--gris-cl);
+}
+.cs-photo {
+  width: 100%;
+  height: 130px;
+  object-fit: contain;
+  object-position: center;
+  padding: 8px;
+  display: block;
+}
+.cs-svg-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #e8ecf0, #d4dce4);
+}
+/* Schémas SVG dans le fallback */
+.cfam-schema-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cfam-schema-label { font-size: 8px; color: #666; font-family: Tahoma; font-weight: bold; text-transform: uppercase; }
+
+/* Pied de carte */
+.cs-footer {
+  padding: 7px 12px;
+  background: #fafafa;
+}
+.cs-voir {
+  font-size: 11px;
+  color: var(--rouge);
+  font-weight: bold;
+}
+
+/* ══════════════════════════════════════════════
+   CARROUSEL PHOTOS (supprimé — remplacé par cs-*)
+   Styles conservés pour rétro-compatibilité éventuelle
+/* ══════════════════════════════════════════════
+   MODALE FAMILLE — accordéon + scroll
+
 ══════════════════════════════════════════════ */
 
 /* Conteneur visuel : toujours 150px de haut */
