@@ -1526,59 +1526,63 @@ const Stock = (() => {
     /* Image de la section — avec fallback SVG si fichier absent */
     const zoneVisuel = m.querySelector('#fiche-visuel');
     if (zoneVisuel) {
-      // Table de correspondance type → fichier image dans assets/profils/
-      const IMAGES_SECTIONS = {
-        'IPE':   'IPE.png',
-        'IPEA':  'IPEA.png',
-        'IPEAA': 'IPEAA.png',
-        'IPEO':  'IPEO.png',
-        'IPE750':'IPE750.png',
-        'IPN':   'IPN.png',
-        'HEA':   'HEA.png',
-        'HEAA':  'HEAA.png',
-        'HEB':   'HEB.png',
-        'HEM':   'HEM.png',
-        'UPN':   'UPN.png',
-        'UPE':   'UPE.png',
-      };
+      // Identifier la série depuis la désignation
+      // Les désignations suivent le format de sections.json : "IPE 240", "IPE A 140", "HEA A 100", "L 40×40×4"
+      // On teste les préfixes du plus long au plus court pour éviter "IPE" de matcher "IPE A"
+      const SERIES_IMAGES = [
+        { prefixe: 'IPE A',   fichier: 'IPEA.png'   },
+        { prefixe: 'IPE O',   fichier: 'IPEO.png'   },
+        { prefixe: 'IPE 750', fichier: 'IPE750.png' },
+        { prefixe: 'IPE',     fichier: 'IPE.png'    },
+        { prefixe: 'IPN',     fichier: 'IPN.png'    },
+        { prefixe: 'HEA A',   fichier: 'HEAA.png'   },
+        { prefixe: 'HEA',     fichier: 'HEA.png'    },
+        { prefixe: 'HEB',     fichier: 'HEB.png'    },
+        { prefixe: 'HEM',     fichier: 'HEM.png'    },
+        { prefixe: 'UPN',     fichier: 'UPN.png'    },
+        { prefixe: 'UPE',     fichier: 'UPE.png'    },
+        // Cornière : "L 40×40×4" (égale) ou "L 60×40×5" (inégale)
+        // Détection : après "L ", comparer les deux premières dimensions
+        { prefixe: 'L ',      fichier: null          }, // traité séparément
+      ];
 
-      // Cornière : Le (égale) ou Li (inégale) selon la désignation
-      // Les désignations égales ont le format NxN (ex: 80×80×8)
-      // Les inégales ont le format AxBxe avec A≠B (ex: 100×65×8)
-      if (type === 'Cornière') {
-        const parts = desig.replace(/[×xX]/g, '×').split('×');
-        const estEgale = parts.length >= 2 && parts[0].trim() === parts[1].trim();
-        IMAGES_SECTIONS['Cornière'] = estEgale ? 'Le.png' : 'Li.png';
+      let nomFichier = null;
+      for (const s of SERIES_IMAGES) {
+        if (desig.startsWith(s.prefixe)) {
+          if (s.prefixe === 'L ') {
+            // Cornière — extraire les dimensions après "L "
+            const dims = desig.slice(2).replace(/[×xX]/g, '×').split('×');
+            const estEgale = dims.length >= 2 && dims[0].trim() === dims[1].trim();
+            nomFichier = estEgale ? 'Le.png' : 'Li.png';
+          } else {
+            nomFichier = s.fichier;
+          }
+          break;
+        }
       }
 
-      const nomFichier = IMAGES_SECTIONS[type];
+      const img   = zoneVisuel.querySelector('#fiche-img');
+      const svgEl = zoneVisuel.querySelector('#fiche-svg');
 
-      if (nomFichier) {
+      if (nomFichier && img) {
         // Afficher l'image — masquer le SVG
-        const img = zoneVisuel.querySelector('#fiche-img');
-        const svgEl = zoneVisuel.querySelector('#fiche-svg');
-
-        if (img) {
-          img.src = `../assets/profils/${nomFichier}`;
-          img.alt = `Section ${type} ${desig}`;
-          img.style.display = 'block';
-          // Fallback SVG si l'image ne charge pas
-          img.onerror = function() {
-            this.style.display = 'none';
-            if (svgEl) {
-              while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
-              _dessinerSVGComplet(svgEl, type);
-              svgEl.style.display = 'block';
-            }
-          };
-        }
+        img.src = `../assets/profils/${nomFichier}`;
+        img.alt = `Section ${desig}`;
+        img.style.display = 'block';
         if (svgEl) svgEl.style.display = 'none';
 
+        // Fallback SVG si l'image ne charge pas
+        img.onerror = function() {
+          this.style.display = 'none';
+          if (svgEl) {
+            while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+            _dessinerSVGComplet(svgEl, type);
+            svgEl.style.display = 'block';
+          }
+        };
       } else {
         // Pas d'image disponible — garder le SVG généré
-        const img   = zoneVisuel.querySelector('#fiche-img');
-        const svgEl = zoneVisuel.querySelector('#fiche-svg');
-        if (img)   img.style.display = 'none';
+        if (img) img.style.display = 'none';
         if (svgEl) {
           while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
           _dessinerSVGComplet(svgEl, type);
@@ -1589,7 +1593,7 @@ const Stock = (() => {
 
     /* Label schéma */
     const schemaLabel = m.querySelector('#fiche-schema-label');
-    if (schemaLabel) schemaLabel.textContent = `${type} ${desig}`;
+    if (schemaLabel) schemaLabel.textContent = `${desig}`;
 
     /* Dimensions */
     const dimsList = m.querySelector('#fiche-dims-list');
