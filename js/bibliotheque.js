@@ -135,11 +135,8 @@ function biblioRendreGrille() {
     // Pour chaque série : compter les désignations correspondantes
     const seriesAvecCount = fam.series.map(sr => {
       const secs = famStd.sections.filter(s => {
-        const serieMatch = (s.serie || fam.famJson) === sr.serie ||
-                           s.desig.startsWith(sr.serie + ' ') ||
-                           s.desig === sr.serie;
-        if (!serieMatch) return false;
-        if (rech) return `${s.serie || ''} ${s.desig}`.toLowerCase().includes(rech);
+        if (s.serie !== sr.serie) return false;
+        if (rech) return s.desig.toLowerCase().includes(rech);
         return true;
       });
       return { ...sr, nbDesig: secs.length };
@@ -247,11 +244,7 @@ function biblioOuvrirModaleSerie(serie, famId) {
   if (!famStd) return;
 
   // Filtrer uniquement les sections de cette série
-  const sections = famStd.sections.filter(s =>
-    (s.serie || famJson) === serie ||
-    s.desig.startsWith(serie + ' ') ||
-    s.desig === serie
-  );
+  const sections = famStd.sections.filter(s => s.serie === serie);
 
   // Stocker l'état
   MfEtat.famId    = famId;
@@ -270,9 +263,7 @@ function biblioOuvrirModaleSerie(serie, famId) {
   const imgZone    = m.querySelector('#mf-img-zone');
   if (imgZone) {
     if (imgSrcInit) {
-      imgZone.innerHTML = `<img src="${imgSrcInit}" alt="${serie}"
-        style="max-width:100%; max-height:220px; object-fit:contain; display:block; margin:0 auto;"
-        onerror="this.parentNode.innerHTML='<span style=color:#ccc;font-size:11px>Image non disponible</span>'">`;
+      imgZone.innerHTML = mfImageHtml(imgSrcInit, serie);
     } else {
       imgZone.innerHTML = `<span style="color:#ccc;font-size:12px;">—</span>`;
     }
@@ -281,6 +272,72 @@ function biblioOuvrirModaleSerie(serie, famId) {
   // Construire le tableau simple (sans accordéon, une seule série)
   mfRendreTableauSimple(m, sections, famJson, serie);
   m.classList.add('open');
+}
+
+/**
+ * Génère le HTML d'une image avec zoom au clic (toggle)
+ */
+function mfImageHtml(src, serie) {
+  return `<img src="${src}" alt="${serie}" data-serie="${serie}" data-zoom="0"
+    style="max-width:100%; max-height:220px; object-fit:contain; display:block;
+           margin:0 auto; cursor:zoom-in; transition:max-height .2s;"
+    onclick="mfZoomImage(this)"
+    onerror="this.parentNode.innerHTML='<span style=color:#ccc;font-size:11px>Image non disponible</span>'">`;
+}
+
+/**
+ * Toggle zoom sur l'image de la modale
+ */
+function mfZoomImage(img) {
+  const zoom = img.dataset.zoom === '1';
+  if (zoom) {
+    // Retour à la normale
+    img.style.maxHeight  = '220px';
+    img.style.cursor     = 'zoom-in';
+    img.dataset.zoom     = '0';
+    img.style.position   = '';
+    img.style.zIndex     = '';
+    img.style.background = '';
+    img.style.padding    = '';
+    img.style.boxShadow  = '';
+    const overlay = document.getElementById('mf-zoom-overlay');
+    if (overlay) overlay.remove();
+  } else {
+    // Zoom — agrandir l'image dans une overlay
+    img.dataset.zoom = '1';
+    img.style.cursor = 'zoom-out';
+
+    // Créer overlay plein écran
+    const overlay = document.createElement('div');
+    overlay.id = 'mf-zoom-overlay';
+    overlay.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      display:flex; align-items:center; justify-content:center;
+      z-index:9999; cursor:zoom-out;`;
+    overlay.onclick = () => mfZoomImage(img);
+
+    const imgGrande = document.createElement('img');
+    imgGrande.src   = img.src;
+    imgGrande.alt   = img.alt;
+    imgGrande.style.cssText = `
+      max-width:90vw; max-height:85vh;
+      object-fit:contain; display:block;
+      border-radius:4px; box-shadow:0 8px 40px rgba(0,0,0,0.6);`;
+    overlay.appendChild(imgGrande);
+
+    // Bouton fermer
+    const btnFermer = document.createElement('button');
+    btnFermer.textContent = '✕';
+    btnFermer.style.cssText = `
+      position:absolute; top:16px; right:20px;
+      background:rgba(255,255,255,0.15); border:none; color:white;
+      font-size:22px; cursor:pointer; border-radius:50%;
+      width:36px; height:36px; display:flex; align-items:center; justify-content:center;`;
+    btnFermer.onclick = (e) => { e.stopPropagation(); mfZoomImage(img); };
+    overlay.appendChild(btnFermer);
+
+    document.body.appendChild(overlay);
+  }
 }
 
 /**
@@ -777,15 +834,14 @@ function biblioSelectionnerDesig(idxGlobal) {
   // Mettre à jour le label
   m.querySelector('#mf-desig-label').textContent = `${s.serie || MfEtat.famJson} ${s.desig}`;
 
-  // Afficher l'image PNG selon la série
+  // Afficher l'image PNG selon la série (ne pas recharger si déjà affichée)
   const serie   = s.serie || MfEtat.famId;
   const imgSrc  = MF_PHOTOS[serie] || null;
   const imgZone = m.querySelector('#mf-img-zone');
-  if (imgZone) {
+  const imgCur  = imgZone ? imgZone.querySelector('img') : null;
+  if (imgZone && (!imgCur || imgCur.dataset.serie !== serie)) {
     if (imgSrc) {
-      imgZone.innerHTML = `<img src="${imgSrc}" alt="${serie}"
-        style="max-width:100%; max-height:220px; object-fit:contain; display:block; margin:0 auto;"
-        onerror="this.parentNode.innerHTML='<span style=color:#ccc;font-size:11px>Image non disponible</span>'">`;
+      imgZone.innerHTML = mfImageHtml(imgSrc, serie);
     } else {
       imgZone.innerHTML = `<div style="padding:10px;">${biblioSvgCote({ famille: MfEtat.famJson, ...s }, 180, 160)}</div>`;
     }
