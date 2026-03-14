@@ -846,7 +846,7 @@ header {
   text-align: left;
   white-space: nowrap;
   position: sticky;
-  top: 37px;
+  top: 0;
   z-index: 1;
 }
 .mf-groupe-table thead th:not(:first-child) { text-align: right; }
@@ -1080,8 +1080,8 @@ header {
     <!-- Corps scrollable -->
     <div style="display:flex; gap:0; flex:1; overflow:hidden;">
 
-      <!-- Colonne gauche : tableau avec accordéon, scroll vertical -->
-      <div style="flex:1; overflow-y:auto; padding:0 0 12px;">
+      <!-- Colonne gauche : tableau série, hauteur auto -->
+      <div style="flex:1; overflow-y:auto; padding:14px 14px 14px 0; min-width:0;">
         <div id="mf-accordeon"></div>
       </div>
 

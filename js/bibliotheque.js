@@ -229,13 +229,85 @@ function carteSeriePhotoErreur(carteId, famId) {
 }
 
 /**
- * Ouvre la modale famille filtrée sur une série précise
+ * Ouvre la modale directement sur une série précise
+ * Affiche uniquement les désignations de cette série
  * @param {string} serie  — ex: 'HEA'
  * @param {string} famId  — ex: 'HE'
  */
 function biblioOuvrirModaleSerie(serie, famId) {
-  // Ouvrir la modale famille puis scroller/ouvrir le bon groupe
-  biblioOuvrirModaleFamille(famId, serie);
+  const m = document.getElementById('m-famille');
+  if (!m) return;
+
+  const MAP_FAM = {
+    'IPE': 'Profilés I', 'HE': 'Profilés H',
+    'U':   'Profilés U', 'Cornière': 'Cornière', 'Plat': 'Plat'
+  };
+  const famJson = MAP_FAM[famId] || famId;
+  const famStd  = Biblio.data.standard.find(f => f.famille === famJson);
+  if (!famStd) return;
+
+  // Filtrer uniquement les sections de cette série
+  const sections = famStd.sections.filter(s =>
+    (s.serie || famJson) === serie ||
+    s.desig.startsWith(serie + ' ') ||
+    s.desig === serie
+  );
+
+  // Stocker l'état
+  MfEtat.famId    = famId;
+  MfEtat.famJson  = famJson;
+  MfEtat.sections = sections;
+  MfEtat.groupes  = [{ serie, secs: sections }];
+
+  // En-tête modale
+  m.querySelector('#mf-titre').textContent       = serie;
+  m.querySelector('#mf-norme').textContent       = famStd.norme || '';
+  m.querySelector('#mf-dims').innerHTML          = '';
+  m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
+  m.querySelector('#mf-img-zone').innerHTML      = '<span style="color:#ccc;font-size:12px;">—</span>';
+
+  // Construire le tableau simple (sans accordéon, une seule série)
+  mfRendreTableauSimple(m, sections, famJson, serie);
+  m.classList.add('open');
+}
+
+/**
+ * Rendu du tableau simple pour une série unique — 5 lignes visibles, scroll
+ */
+function mfRendreTableauSimple(m, sections, famJson, serie) {
+  const accordeon = m.querySelector('#mf-accordeon');
+  if (!accordeon) return;
+
+  const colonnes = _colonnesFamille(famJson);
+
+  // En-tête tableau
+  let thHtml = '<thead><tr>';
+  thHtml += '<th style="text-align:left;padding:7px 10px;">Désig.</th>';
+  colonnes.forEach(c => { thHtml += `<th style="padding:7px 6px;">${c.label}</th>`; });
+  thHtml += '</tr></thead>';
+
+  // Corps tableau
+  let tbHtml = '<tbody>';
+  sections.forEach((s, i) => {
+    const idxGlobal = MfEtat.sections.indexOf(s);
+    tbHtml += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig(${idxGlobal})">`;
+    tbHtml += `<td style="padding:6px 10px;font-weight:bold;">${s.desig}</td>`;
+    colonnes.forEach(c => {
+      tbHtml += `<td style="padding:6px;text-align:right;color:#555;">${s[c.key] !== undefined ? s[c.key] : '—'}</td>`;
+    });
+    tbHtml += '</tr>';
+  });
+  tbHtml += '</tbody>';
+
+  // Hauteur fixe = 5 lignes (~37px/ligne) + en-tête (33px)
+  const HAUTEUR_LIGNE = 37;
+  const HAUTEUR_THEAD = 33;
+  const hauteurMax    = HAUTEUR_THEAD + (5 * HAUTEUR_LIGNE);
+
+  accordeon.innerHTML = `
+    <div style="overflow-y:auto; max-height:${hauteurMax}px; border:1px solid var(--gris-cl); border-radius:3px;">
+      <table class="mf-groupe-table" style="margin:0;">${thHtml}${tbHtml}</table>
+    </div>`;
 }
 
 /**
