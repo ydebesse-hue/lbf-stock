@@ -654,6 +654,138 @@ header {
 }
 
 /* ══════════════════════════════════════════════
+   CARROUSEL PHOTOS
+══════════════════════════════════════════════ */
+
+/* Conteneur visuel : toujours 150px de haut */
+.cfam-visuel {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  background: #e8ecf0;
+}
+
+/* Slides */
+.cfam-slide {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.cfam-slide.cfam-slide-active { display: flex; align-items: center; justify-content: center; }
+
+/* Image dans la slide */
+.cfam-slide img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Légende photo */
+.cfam-slide-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(30,30,35,0.65);
+  color: white;
+  font-family: Impact, sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+/* Placeholder SVG (quand pas de photos) */
+.cfam-placeholder {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #e8ecf0 0%, #d4dce4 100%);
+}
+.cfam-placeholder.cfam-slide-active { display: flex; }
+.cfam-placeholder-label {
+  font-size: 10px;
+  color: #aaa;
+  margin-top: 6px;
+  font-style: italic;
+  letter-spacing: .5px;
+}
+
+/* Boutons navigation ← → */
+.cfam-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(30,30,35,0.55);
+  color: white;
+  border: none;
+  width: 26px;
+  height: 36px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 2px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+  padding: 0;
+}
+.cfam-nav:hover { background: rgba(210,35,42,0.8); }
+.cfam-nav-prev { left: 4px; }
+.cfam-nav-next { right: 4px; }
+
+/* Points indicateurs */
+.cfam-dots {
+  position: absolute;
+  bottom: 22px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  z-index: 10;
+}
+.cfam-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+.cfam-dot.cfam-dot-active {
+  background: white;
+  transform: scale(1.3);
+}
+
+/* Multi-schémas placeholder */
+.cfam-schemas {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 8px 0;
+}
+.cfam-schema-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.cfam-schema-label {
+  font-size: 8px;
+  color: #666;
+  font-family: Tahoma;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+/* ══════════════════════════════════════════════
    MODALE FAMILLE — pagination
 ══════════════════════════════════════════════ */
 .mf-pagination {
