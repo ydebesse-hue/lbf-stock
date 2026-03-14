@@ -1523,16 +1523,73 @@ const Stock = (() => {
       badgeNorme.textContent = normes[type] || 'Section normalisée';
     }
 
-    /* SVG */
-    const svgEl = m.querySelector('#fiche-svg');
-    if (svgEl) {
-      while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
-      _dessinerSVGComplet(svgEl, type);
+    /* Image de la section — avec fallback SVG si fichier absent */
+    const zoneVisuel = m.querySelector('#fiche-visuel');
+    if (zoneVisuel) {
+      // Table de correspondance type → fichier image dans assets/profils/
+      const IMAGES_SECTIONS = {
+        'IPE':   'IPE.png',
+        'IPEA':  'IPEA.png',
+        'IPEAA': 'IPEAA.png',
+        'IPEO':  'IPEO.png',
+        'IPE750':'IPE750.png',
+        'IPN':   'IPN.png',
+        'HEA':   'HEA.png',
+        'HEAA':  'HEAA.png',
+        'HEB':   'HEB.png',
+        'HEM':   'HEM.png',
+        'UPN':   'UPN.png',
+        'UPE':   'UPE.png',
+      };
+
+      // Cornière : Le (égale) ou Li (inégale) selon la désignation
+      // Les désignations égales ont le format NxN (ex: 80×80×8)
+      // Les inégales ont le format AxBxe avec A≠B (ex: 100×65×8)
+      if (type === 'Cornière') {
+        const parts = desig.replace(/[×xX]/g, '×').split('×');
+        const estEgale = parts.length >= 2 && parts[0].trim() === parts[1].trim();
+        IMAGES_SECTIONS['Cornière'] = estEgale ? 'Le.png' : 'Li.png';
+      }
+
+      const nomFichier = IMAGES_SECTIONS[type];
+
+      if (nomFichier) {
+        // Afficher l'image — masquer le SVG
+        const img = zoneVisuel.querySelector('#fiche-img');
+        const svgEl = zoneVisuel.querySelector('#fiche-svg');
+
+        if (img) {
+          img.src = `../assets/profils/${nomFichier}`;
+          img.alt = `Section ${type} ${desig}`;
+          img.style.display = 'block';
+          // Fallback SVG si l'image ne charge pas
+          img.onerror = function() {
+            this.style.display = 'none';
+            if (svgEl) {
+              while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+              _dessinerSVGComplet(svgEl, type);
+              svgEl.style.display = 'block';
+            }
+          };
+        }
+        if (svgEl) svgEl.style.display = 'none';
+
+      } else {
+        // Pas d'image disponible — garder le SVG généré
+        const img   = zoneVisuel.querySelector('#fiche-img');
+        const svgEl = zoneVisuel.querySelector('#fiche-svg');
+        if (img)   img.style.display = 'none';
+        if (svgEl) {
+          while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+          _dessinerSVGComplet(svgEl, type);
+          svgEl.style.display = 'block';
+        }
+      }
     }
 
     /* Label schéma */
     const schemaLabel = m.querySelector('#fiche-schema-label');
-    if (schemaLabel) schemaLabel.textContent = `Schéma ${type} ${desig}`;
+    if (schemaLabel) schemaLabel.textContent = `${type} ${desig}`;
 
     /* Dimensions */
     const dimsList = m.querySelector('#fiche-dims-list');
