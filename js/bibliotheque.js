@@ -60,86 +60,227 @@ async function biblioInit(profil) {
 ══════════════════════════════════════════════ */
 
 /**
- * Rendu de la grille — une carte par famille de section
+ * Rendu de la grille — 4 cartes famille (IPE · HE · U · Cornière)
+ * Chaque carte regroupe plusieurs séries d'une même famille
  */
 function biblioRendreGrille() {
   const conteneur = document.getElementById('biblio-grille');
   if (!conteneur) return;
 
-  // Construire la liste des familles disponibles
-  const familles = {};
-  Biblio.data.standard.forEach(fam => {
-    if (Biblio.filtres.famille && fam.famille !== Biblio.filtres.famille) return;
-    if (Biblio.filtres.recherche) {
-      const match = fam.sections.some(s =>
-        `${fam.famille} ${s.desig} ${s.serie||''}`.toLowerCase().includes(Biblio.filtres.recherche)
-      );
-      if (!match) return;
+  // Définition des 4 familles affichées + leur mapping vers sections.json
+  const FAMILLES_AFFICHEES = [
+    {
+      id:       'IPE',
+      titre:    'IPE',
+      sousTitre:'IPE · IPE A · IPE O · IPN',
+      norme:    'EN 10034 / EN 10024',
+      famJson:  ['Profilés I'],
+      // Chemin image réelle — remplacer par '../assets/profils/ipe.jpg' quand disponible
+      photo:    null
+    },
+    {
+      id:       'HE',
+      titre:    'HE',
+      sousTitre:'HEA · HEB · HEM · HEA A',
+      norme:    'EN 10034',
+      famJson:  ['Profilés H'],
+      photo:    null
+    },
+    {
+      id:       'U',
+      titre:    'U',
+      sousTitre:'UPN · UPE',
+      norme:    'EN 10279 / EN 10162',
+      famJson:  ['Profilés U'],
+      photo:    null
+    },
+    {
+      id:       'Cornière',
+      titre:    'Cornière',
+      sousTitre:'L égale · L inégale',
+      norme:    'EN 10056-1 / -2',
+      famJson:  ['Cornière'],
+      photo:    null
     }
-    familles[fam.famille] = {
-      famille:  fam.famille,
-      norme:    fam.norme,
-      source:   'standard',
-      sections: fam.sections,
-      statut:   'valide'
-    };
-  });
+  ];
 
-  // Sections custom — regroupées par famille
-  Biblio.data.custom.forEach(s => {
-    if (Biblio.filtres.famille && s.famille !== Biblio.filtres.famille) return;
-    if (s.statut === 'attente' && Biblio.profil === 'consultation') return;
-    if (!familles[s.famille]) {
-      familles[s.famille] = { famille: s.famille, norme: '', source: 'custom', sections: [], statut: s.statut };
-    }
-    familles[s.famille].sections.push(s);
-  });
+  // Filtre éventuel depuis la toolbar
+  const famFiltree = Biblio.filtres.famille;
+  const rech       = Biblio.filtres.recherche;
 
-  if (Object.keys(familles).length === 0) {
-    conteneur.innerHTML = `
-      <div class="biblio-vide">
-        <span style="font-size:32px">🔍</span>
-        <p>Aucune section ne correspond aux filtres</p>
-      </div>`;
-    return;
-  }
+  let nbTotal = 0;
+  let cartes  = 0;
 
   conteneur.innerHTML = '';
-  Object.values(familles).forEach(fam => {
-    conteneur.appendChild(biblioCreerCarteFamille(fam));
+
+  FAMILLES_AFFICHEES.forEach(fam => {
+    // Filtre famille toolbar
+    if (famFiltree && !fam.famJson.includes(famFiltree) && fam.id !== famFiltree) return;
+
+    // Compter les désignations de cette famille
+    let nbDesig = 0;
+    fam.famJson.forEach(nomJson => {
+      const f = Biblio.data.standard.find(d => d.famille === nomJson);
+      if (f) {
+        if (rech) {
+          nbDesig += f.sections.filter(s =>
+            `${f.famille} ${s.desig} ${s.serie||''}`.toLowerCase().includes(rech)
+          ).length;
+        } else {
+          nbDesig += f.sections.length;
+        }
+      }
+    });
+
+    if (rech && nbDesig === 0) return;
+
+    nbTotal += nbDesig;
+    cartes++;
+    conteneur.appendChild(biblioCreerCarteFamille(fam, nbDesig));
   });
 
-  const compteur = document.getElementById('biblio-compteur');
-  if (compteur) {
-    const total = Object.values(familles).reduce((s, f) => s + f.sections.length, 0);
-    compteur.textContent = `${Object.keys(familles).length} famille(s) — ${total} désignation(s)`;
+  if (cartes === 0) {
+    conteneur.innerHTML = `
+      <div class="biblio-vide" style="grid-column:1/-1">
+        <span style="font-size:32px">🔍</span>
+        <p>Aucune famille ne correspond aux filtres</p>
+      </div>`;
   }
+
+  const compteur = document.getElementById('biblio-compteur');
+  if (compteur) compteur.textContent = `${cartes} famille(s) — ${nbTotal} désignation(s)`;
 }
 
 /**
- * Crée une carte pour une famille de section
- * @param {Object} fam — { famille, norme, source, sections, statut }
+ * Crée une carte famille améliorée
+ * @param {Object} fam  — { id, titre, sousTitre, norme, famJson, photo }
+ * @param {number} nbDesig — nombre de désignations
  * @returns {HTMLElement}
  */
-function biblioCreerCarteFamille(fam) {
+function biblioCreerCarteFamille(fam, nbDesig) {
   const carte = document.createElement('div');
-  carte.className = 'biblio-carte carte-famille';
-  carte.style.cursor = 'pointer';
-  carte.onclick = () => biblioOuvrirModaleFamille(fam.famille);
+  carte.className = 'biblio-carte-famille';
+  carte.onclick = () => biblioOuvrirModaleFamille(fam.id);
 
-  const svgMini = biblioSvgMini(fam.famille, 80, 66);
+  // Zone visuelle : photo réelle ou placeholder SVG multi-schémas
+  let visuelHtml;
+  if (fam.photo) {
+    // Photo réelle disponible
+    visuelHtml = `
+      <div class="cfam-visuel">
+        <img class="cfam-photo" src="${fam.photo}" alt="${fam.titre}"
+             onerror="this.parentNode.innerHTML=biblioPlaceholderSvg('${fam.id}')">
+      </div>`;
+  } else {
+    // Placeholder SVG multi-schémas
+    visuelHtml = `
+      <div class="cfam-visuel">
+        <div class="cfam-placeholder">
+          <div class="cfam-schemas">${biblioSchemasFamille(fam.id)}</div>
+          <span class="cfam-placeholder-label">Photo à venir</span>
+        </div>
+      </div>`;
+  }
 
   carte.innerHTML = `
-    <div class="carte-header">
-      <span class="carte-famille" style="font-size:18px;">${fam.famille}</span>
-      <span style="font-size:10px;color:rgba(255,255,255,0.6);">${fam.sections.length} réf.</span>
+    <div class="cfam-header">
+      <div class="cfam-titre">${fam.titre}</div>
+      <div class="cfam-sous-titre">${fam.sousTitre}</div>
     </div>
-    <div class="carte-svg-zone">${svgMini}</div>
-    <div class="carte-bas">
-      <span style="font-size:11px;color:var(--vert);font-weight:bold;">${fam.norme || 'Section personnalisée'}</span>
+    ${visuelHtml}
+    <div class="cfam-footer">
+      <span class="cfam-norme">${fam.norme}</span>
+      <span class="cfam-count">${nbDesig} réf.</span>
+      <span class="cfam-fleche">›</span>
     </div>`;
 
   return carte;
+}
+
+/**
+ * Génère les mini-schémas SVG multiples pour le placeholder d'une famille
+ * @param {string} famId
+ * @returns {string} HTML
+ */
+function biblioSchemasFamille(famId) {
+  const S = '#5a6a7a', F = '#c2d0dc', FL = '#a0b4c4';
+
+  // Chaque schéma : { label, svgInner }
+  const schemas = {
+    'IPE': [
+      { label: 'IPE',   svg: _svgIPE(60, 56, F, FL, S, 44, 8)  },
+      { label: 'IPE A', svg: _svgIPE(60, 56, '#c8dce8', '#aacce0', S, 44, 6) },
+      { label: 'IPN',   svg: _svgIPN(60, 56, F, FL, S) }
+    ],
+    'HE': [
+      { label: 'HEA',  svg: _svgHE(60, 56, F, FL, S, 56, 9)  },
+      { label: 'HEB',  svg: _svgHE(60, 56, '#b8c8d4', '#9ab4c4', S, 56, 13) },
+      { label: 'HEM',  svg: _svgHE(60, 56, '#a8bcc8', '#8aaab8', S, 56, 20) }
+    ],
+    'U': [
+      { label: 'UPN', svg: _svgUPN(60, 56, F, FL, S, false) },
+      { label: 'UPE', svg: _svgUPN(60, 56, '#c2d8e8', '#a4c4d8', S, true) }
+    ],
+    'Cornière': [
+      { label: 'L égale',   svg: _svgCorn(60, 56, F, FL, S, true)  },
+      { label: 'L inégale', svg: _svgCorn(60, 56, '#c8d8a0', '#b0c888', S, false) }
+    ]
+  };
+
+  const list = schemas[famId] || [];
+  return list.map(sc => `
+    <div class="cfam-schema-item">
+      <svg width="60" height="56" viewBox="0 0 60 56"
+           xmlns="http://www.w3.org/2000/svg">${sc.svg}</svg>
+      <span class="cfam-schema-label">${sc.label}</span>
+    </div>`).join('');
+}
+
+/* ── Helpers dessins SVG schémas ── */
+
+function _svgIPE(w, h, f, fl, s, bw, tf) {
+  const cx = w/2, tw = 5, aw = bw, ah = h - 2*tf;
+  return `
+    <rect x="${cx-aw/2}" y="0"        width="${aw}" height="${tf}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${cx-aw/2}" y="${h-tf}"  width="${aw}" height="${tf}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${cx-tw/2}" y="${tf}"    width="${tw}"  height="${ah}" fill="${f}"  stroke="${s}" stroke-width="1"/>`;
+}
+
+function _svgIPN(w, h, f, fl, s) {
+  /* IPN : ailes inclinées — approximation trapèze */
+  const cx = w/2;
+  return `
+    <polygon points="${cx-22},0 ${cx+22},0 ${cx+22},8 ${cx-22},8"   fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <polygon points="${cx-16},${h-8} ${cx+16},${h-8} ${cx+16},${h} ${cx-16},${h}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${cx-3}" y="8" width="6" height="${h-16}" fill="${f}" stroke="${s}" stroke-width="1"/>`;
+}
+
+function _svgHE(w, h, f, fl, s, bw, tf) {
+  const cx = w/2, tw = 7;
+  const ah = h - 2*tf;
+  return `
+    <rect x="${cx-bw/2}" y="0"        width="${bw}" height="${tf}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${cx-bw/2}" y="${h-tf}"  width="${bw}" height="${tf}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${cx-tw/2}" y="${tf}"    width="${tw}"  height="${ah}" fill="${f}"  stroke="${s}" stroke-width="1"/>`;
+}
+
+function _svgUPN(w, h, f, fl, s, upe) {
+  /* UPN : U ouvert à droite. UPE : ailes parallèles (tf uniforme) */
+  const cx = w/2, bw = 44, tf = upe ? 7 : 8;
+  /* Aile haute */
+  return `
+    <rect x="${cx-bw/2}" y="0"        width="${bw}" height="${tf}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${cx-bw/2}" y="${h-tf}"  width="${bw}" height="${tf}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${cx-bw/2}" y="${tf}"    width="8"     height="${h-2*tf}" fill="${f}" stroke="${s}" stroke-width="1"/>`;
+}
+
+function _svgCorn(w, h, f, fl, s, egale) {
+  /* Cornière : deux branches. Égale = carré, inégale = b < a */
+  const a = 40, b = egale ? 40 : 28, e = 6;
+  const ox = 10, oy = h - a;
+  return `
+    <rect x="${ox}"   y="${oy}"   width="${b}" height="${e}" fill="${fl}" stroke="${s}" stroke-width="1"/>
+    <rect x="${ox}"   y="${oy-a+e}" width="${e}" height="${a}" fill="${f}"  stroke="${s}" stroke-width="1"/>`;
 }
 
 /**
@@ -293,45 +434,105 @@ function biblioGetSectionsFiltrees() {
    MODALE FAMILLE — TABLEAU + SVG
 ══════════════════════════════════════════════ */
 
+/* État pagination modale famille */
+const MfPagination = {
+  famId:    '',       // identifiant famille (ex: 'IPE', 'HE')
+  famJson:  '',       // nom dans sections.json (ex: 'Profilés I')
+  sections: [],       // toutes les sections de la famille
+  page:     0,        // page courante (0-indexé)
+  parPage:  10        // lignes par page
+};
+
 /**
- * Ouvre la modale famille avec tableau des désignations
- * @param {string} nomFamille
+ * Ouvre la modale famille avec tableau paginé des désignations
+ * @param {string} famId — identifiant famille (IPE, HE, U, Cornière)
  */
-function biblioOuvrirModaleFamille(nomFamille) {
+function biblioOuvrirModaleFamille(famId) {
   const m = document.getElementById('m-famille');
   if (!m) return;
 
-  const famStd   = Biblio.data.standard.find(f => f.famille === nomFamille);
-  const sections = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === nomFamille);
+  // Mapping famId → famille dans sections.json
+  const MAP_FAM = {
+    'IPE':      'Profilés I',
+    'HE':       'Profilés H',
+    'U':        'Profilés U',
+    'Cornière': 'Cornière',
+    'Plat':     'Plat'
+  };
+  const MAP_TITRE = {
+    'IPE': 'Famille IPE · IPN',
+    'HE':  'Famille HEA · HEB · HEM',
+    'U':   'Famille UPN · UPE',
+    'Cornière': 'Famille Cornière',
+    'Plat': 'Famille Plat'
+  };
+
+  const famJson  = MAP_FAM[famId] || famId;
+  const famStd   = Biblio.data.standard.find(f => f.famille === famJson);
+  const sections = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === famId);
   const norme    = famStd ? famStd.norme : '';
 
-  m.querySelector('#mf-titre').textContent  = nomFamille;
-  m.querySelector('#mf-norme').textContent  = norme;
-  m.querySelector('#mf-dims').innerHTML     = '';
+  // Initialiser état pagination
+  MfPagination.famId    = famId;
+  MfPagination.famJson  = famJson;
+  MfPagination.sections = sections;
+  MfPagination.page     = 0;
+
+  m.querySelector('#mf-titre').textContent = MAP_TITRE[famId] || famId;
+  m.querySelector('#mf-norme').textContent = norme;
+  m.querySelector('#mf-dims').innerHTML    = '';
   m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
 
   // SVG initial avec la première section
   if (sections.length) {
-    m.querySelector('#mf-svg-zone').innerHTML = biblioSvgCote({ famille: nomFamille, ...sections[0] }, 200, 180);
+    m.querySelector('#mf-svg-zone').innerHTML =
+      biblioSvgCote({ famille: famJson, ...sections[0] }, 200, 180);
   }
 
-  // Colonnes du tableau
-  const colonnes = _colonnesFamille(nomFamille);
+  // Construire l'en-tête (une seule fois)
+  const colonnes  = _colonnesFamille(famJson);
   const avecSerie = sections.some(s => s.serie);
-
   let thead = '<tr style="background:rgb(30,30,35);">';
-  if (avecSerie) {
-    thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 8px;text-align:left;">Série</th>';
-  }
+  if (avecSerie) thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 8px;text-align:left;">Série</th>';
   thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 10px;text-align:left;">Désig.</th>';
   colonnes.forEach(c => {
     thead += `<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 6px;text-align:right;">${c.label}</th>`;
   });
   thead += '</tr>';
+  m.querySelector('#mf-thead').innerHTML = thead;
+
+  m.dataset.famille   = famId;
+  m.dataset.famjson   = famJson;
+  m.dataset.avecSerie = avecSerie ? '1' : '0';
+
+  // Rendu première page
+  mfRendrePage(m, 0);
+  m.classList.add('open');
+}
+
+/**
+ * Rend une page du tableau et met à jour la pagination
+ * @param {HTMLElement} m — modale
+ * @param {number} page — page 0-indexée
+ */
+function mfRendrePage(m, page) {
+  const { sections, parPage, famId, famJson } = MfPagination;
+  MfPagination.page = page;
+
+  const debut  = page * parPage;
+  const fin    = Math.min(debut + parPage, sections.length);
+  const nbPages = Math.ceil(sections.length / parPage);
+  const avecSerie = m.dataset.avecSerie === '1';
+  const colonnes  = _colonnesFamille(famJson);
 
   let tbody = '';
-  sections.forEach((s, i) => {
-    tbody += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig('${nomFamille}',${i})" style="border-bottom:1px solid #eee;cursor:pointer;" onmouseover="if(!this.classList.contains('mf-active'))this.style.background='#fafafa'" onmouseout="if(!this.classList.contains('mf-active'))this.style.background=''">`;
+  for (let i = debut; i < fin; i++) {
+    const s      = sections[i];
+    const idxGlobal = i; // index global pour biblioSelectionnerDesig
+    tbody += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig(${idxGlobal})"
+      style="border-bottom:1px solid #eee;cursor:pointer;"
+      onmouseover="if(!this.classList.contains('mf-active'))this.style.background='#fafafa'"
+      onmouseout="if(!this.classList.contains('mf-active'))this.style.background=''">`;
     if (avecSerie) {
       tbody += `<td style="padding:6px 8px;font-size:11px;color:#888;">${s.serie || '—'}</td>`;
     }
@@ -340,41 +541,61 @@ function biblioOuvrirModaleFamille(nomFamille) {
       tbody += `<td style="padding:6px;text-align:right;color:#555;">${s[c.key] !== undefined ? s[c.key] : '—'}</td>`;
     });
     tbody += '</tr>';
-  });
+  }
 
-  m.querySelector('#mf-thead').innerHTML = thead;
   m.querySelector('#mf-tbody').innerHTML = tbody;
-  m.dataset.famille = nomFamille;
-  m.classList.add('open');
+
+  // Pagination
+  const info = document.getElementById('mf-page-info');
+  const prev = document.getElementById('mf-btn-prev');
+  const next = document.getElementById('mf-btn-next');
+  if (info) info.textContent = `${debut+1}–${fin} / ${sections.length}`;
+  if (prev) prev.disabled = page === 0;
+  if (next) next.disabled = page >= nbPages - 1;
+}
+
+/**
+ * Navigue dans la pagination (+1 ou -1)
+ */
+function mfChangerPage(delta) {
+  const m = document.getElementById('m-famille');
+  if (!m) return;
+  const nbPages = Math.ceil(MfPagination.sections.length / MfPagination.parPage);
+  const nouvPage = Math.max(0, Math.min(MfPagination.page + delta, nbPages - 1));
+  mfRendrePage(m, nouvPage);
 }
 
 /**
  * Sélectionne une désignation dans le tableau et met à jour le SVG + dims
+ * @param {number} idxGlobal — index dans MfPagination.sections
  */
-function biblioSelectionnerDesig(nomFamille, idx) {
+function biblioSelectionnerDesig(idxGlobal) {
   const m = document.getElementById('m-famille');
   if (!m) return;
 
-  // Trouver la section
-  const famStd = Biblio.data.standard.find(f => f.famille === nomFamille);
-  const sections = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === nomFamille);
-  const s = sections[idx];
+  const { sections, famJson } = MfPagination;
+  const s = sections[idxGlobal];
   if (!s) return;
+
+  // Index local dans la page courante
+  const debut = MfPagination.page * MfPagination.parPage;
+  const idxLocal = idxGlobal - debut;
 
   // Mettre en évidence la ligne
   m.querySelectorAll('.mf-ligne').forEach((tr, i) => {
-    tr.classList.toggle('mf-active', i === idx);
-    tr.style.background  = i === idx ? 'rgb(210,35,42)' : '';
-    tr.style.color       = i === idx ? 'white' : '';
-    tr.querySelectorAll('td').forEach(td => td.style.color = i === idx ? 'white' : '');
+    const actif = i === idxLocal;
+    tr.classList.toggle('mf-active', actif);
+    tr.style.background = actif ? 'rgb(210,35,42)' : '';
+    tr.querySelectorAll('td').forEach(td => td.style.color = actif ? 'white' : '');
   });
 
   // Mettre à jour le SVG coté
-  m.querySelector('#mf-svg-zone').innerHTML = biblioSvgCote({ famille: nomFamille, ...s }, 200, 180);
-  m.querySelector('#mf-desig-label').textContent = `${nomFamille} ${s.desig}`;
+  m.querySelector('#mf-svg-zone').innerHTML =
+    biblioSvgCote({ famille: famJson, ...s }, 200, 180);
+  m.querySelector('#mf-desig-label').textContent = `${s.serie || famJson} ${s.desig}`;
 
   // Mettre à jour les dimensions
-  const dims = _dimsSection(s, nomFamille);
+  const dims = _dimsSection(s, famJson);
   m.querySelector('#mf-dims').innerHTML = dims.map(d =>
     `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px;">
       <span style="color:#666;">${d[0]}</span>
@@ -778,25 +999,25 @@ function biblioChargerCustom() {
  * @returns {string} HTML SVG
  */
 function biblioSvgMini(famille, w, h) {
+  /* Conservé pour compatibilité — utilisé dans la modale fiche détail */
   const S = '#445', F = '#b8cad8';
   let formes = '';
-
   const cx = w / 2, cy = h / 2;
 
   switch (famille) {
-    case 'Profilés I':
+    case 'Profilés I': case 'IPE':
       formes = `
         <rect x="${cx-22}" y="4"       width="44" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-22}" y="${h-12}" width="44" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-4}"  y="12"      width="8"  height="${h-24}" fill="${F}" stroke="${S}" stroke-width="1.2"/>`;
       break;
-    case 'Profilés H':
+    case 'Profilés H': case 'HE':
       formes = `
         <rect x="${cx-30}" y="4"       width="60" height="9"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-30}" y="${h-13}" width="60" height="9"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-5}"  y="13"      width="10" height="${h-26}" fill="${F}" stroke="${S}" stroke-width="1.2"/>`;
       break;
-    case 'Profilés U':
+    case 'Profilés U': case 'U':
       formes = `
         <rect x="${cx-25}" y="4"       width="50" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>
         <rect x="${cx-25}" y="${h-12}" width="50" height="8"  fill="${F}" stroke="${S}" stroke-width="1.2"/>

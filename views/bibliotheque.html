@@ -519,6 +519,173 @@ header {
 .d-custom { background: #f3e8ff; color: #6b21a8; border: 1px solid #6b21a8; }
 
 /* ══════════════════════════════════════════════
+   CARTES FAMILLE — nouveau design
+══════════════════════════════════════════════ */
+
+/* Grille principale : 4 cartes max sur une ligne */
+#biblio-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.biblio-carte-famille {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: box-shadow .18s, transform .18s;
+  border: 1px solid var(--gris-cl);
+  display: flex;
+  flex-direction: column;
+}
+.biblio-carte-famille:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  transform: translateY(-3px);
+}
+
+/* En-tête carte famille */
+.cfam-header {
+  background: var(--noir);
+  padding: 12px 14px 10px;
+  border-bottom: 3px solid var(--rouge);
+}
+.cfam-titre {
+  font-family: Impact, sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: white;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.cfam-sous-titre {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 2px;
+  letter-spacing: .5px;
+}
+
+/* Zone image / SVG */
+.cfam-visuel {
+  position: relative;
+  background: #f5f6f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 130px;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Image réelle (quand disponible) */
+.cfam-visuel img.cfam-photo {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Placeholder SVG (avant photo réelle) */
+.cfam-visuel .cfam-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 130px;
+  background: linear-gradient(145deg, #e8ecf0 0%, #d8dfe6 100%);
+}
+.cfam-placeholder-label {
+  font-size: 10px;
+  color: #aaa;
+  margin-top: 6px;
+  font-style: italic;
+  letter-spacing: .5px;
+}
+
+/* Multi-schémas dans le placeholder */
+.cfam-schemas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px;
+}
+.cfam-schema-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.cfam-schema-label {
+  font-size: 9px;
+  color: #777;
+  font-family: Tahoma;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* Pied de carte */
+.cfam-footer {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--gris-cl);
+  background: #fafafa;
+}
+.cfam-norme {
+  font-size: 10px;
+  color: var(--vert);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.cfam-count {
+  font-size: 11px;
+  color: #999;
+}
+.cfam-fleche {
+  font-size: 14px;
+  color: var(--rouge);
+}
+
+/* ══════════════════════════════════════════════
+   MODALE FAMILLE — pagination
+══════════════════════════════════════════════ */
+.mf-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--gris-cl);
+  margin-top: 6px;
+}
+.mf-page-info {
+  font-size: 12px;
+  color: #888;
+}
+.mf-btn-page {
+  padding: 4px 12px;
+  border: 1px solid var(--gris-bd);
+  background: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: Tahoma;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--noir);
+}
+.mf-btn-page:hover:not(:disabled) { background: var(--gris-cl); }
+.mf-btn-page:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Ligne active dans le tableau famille */
+.mf-ligne.mf-active td { color: white !important; }
+
+/* ══════════════════════════════════════════════
    RESPONSIVE MOBILE
 ══════════════════════════════════════════════ */
 @media (max-width: 640px) {
@@ -585,11 +752,10 @@ header {
   <span class="lbl">Filtrer :</span>
   <select class="sel" id="biblio-filtre-famille">
     <option value="">Toutes les familles</option>
-    <option value="Profilés I">Profilés I (IPE, IPN...)</option>
-    <option value="Profilés H">Profilés H (HEA, HEB, HEM...)</option>
-    <option value="Profilés U">Profilés U (UPN, UPE...)</option>
-    <option value="Cornière">Cornière (L égale / inégale)</option>
-    <option value="Plat">Plat</option>
+    <option value="IPE">IPE · IPN</option>
+    <option value="HE">HEA · HEB · HEM</option>
+    <option value="U">UPN · UPE</option>
+    <option value="Cornière">Cornière</option>
   </select>
 
   <div class="toolbar-sep">
@@ -740,12 +906,18 @@ header {
 
     <div style="display:flex; gap:20px; padding:16px 24px; flex-wrap:wrap;">
 
-      <!-- Tableau désignations -->
+      <!-- Tableau désignations + pagination -->
       <div style="flex:1; min-width:280px; overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12px;">
           <thead id="mf-thead"></thead>
           <tbody id="mf-tbody"></tbody>
         </table>
+        <!-- Pagination -->
+        <div class="mf-pagination">
+          <button class="mf-btn-page" id="mf-btn-prev" onclick="mfChangerPage(-1)">&#8592; Préc.</button>
+          <span class="mf-page-info" id="mf-page-info"></span>
+          <button class="mf-btn-page" id="mf-btn-next" onclick="mfChangerPage(+1)">Suiv. &#8594;</button>
+        </div>
       </div>
 
       <!-- SVG + dims -->
