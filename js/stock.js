@@ -955,11 +955,42 @@ const Stock = (() => {
     const label = zoneSchema.querySelector('[id$="-schema-label"]');
     if (label) label.textContent = `${type} ${desig}`;
 
-    // SVG
+    // Image / SVG — même logique que la fiche section
+    const SERIES_IMAGES = {
+      'IPE': 'IPE.png', 'IPE A': 'IPEA.png', 'IPE O': 'IPEO.png',
+      'IPE 750': 'IPE750.png', 'IPN': 'IPN.png',
+      'HEA': 'HEA.png', 'HEA A': 'HEAA.png', 'HEB': 'HEB.png', 'HEM': 'HEM.png',
+      'UPN': 'UPN.png', 'UPE': 'UPE.png',
+      'L égale': 'Le.png', 'L inégale': 'Li.png',
+    };
+    const nomFichier = SERIES_IMAGES[type] || null;
+    const img   = zoneSchema.querySelector('[id$="-img"]');
     const svgEl = zoneSchema.querySelector('svg');
-    if (svgEl) {
-      while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
-      _dessinerSVGComplet(svgEl, type);
+
+    if (nomFichier && img) {
+      img.src          = `../assets/profils/${nomFichier}`;
+      img.alt          = `${type} ${desig}`;
+      img.dataset.zoom = '0';
+      img.style.cursor = 'zoom-in';
+      img.style.display = 'block';
+      img.onclick      = () => _zoomImage(img);
+      if (svgEl) svgEl.style.display = 'none';
+
+      img.onerror = function() {
+        this.style.display = 'none';
+        if (svgEl) {
+          while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+          _dessinerSVGComplet(svgEl, type);
+          svgEl.style.display = 'block';
+        }
+      };
+    } else {
+      if (img) img.style.display = 'none';
+      if (svgEl) {
+        while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+        _dessinerSVGComplet(svgEl, type);
+        svgEl.style.display = 'block';
+      }
     }
 
     // Dimensions
@@ -967,7 +998,6 @@ const Stock = (() => {
     if (dimsList) {
       const dims = _getDims(type, desig);
       _rendreDimsList(dimsList, dims);
-      // Stocker poids/ml pour calcul poids barre
       m.dataset.poidsml = dims ? dims.pml : '';
     }
 
