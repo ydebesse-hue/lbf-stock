@@ -789,35 +789,81 @@ header {
 }
 
 /* ══════════════════════════════════════════════
-   MODALE FAMILLE — pagination
+   MODALE FAMILLE — accordéon + scroll
 ══════════════════════════════════════════════ */
-.mf-pagination {
+
+/* En-tête de groupe (HEA, HEB, HEM...) */
+.mf-groupe-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0 4px;
-  border-top: 1px solid var(--gris-cl);
-  margin-top: 6px;
-}
-.mf-page-info {
-  font-size: 12px;
-  color: #888;
-}
-.mf-btn-page {
-  padding: 4px 12px;
-  border: 1px solid var(--gris-bd);
-  background: white;
-  border-radius: 3px;
+  padding: 8px 14px;
+  background: var(--gris-bg);
+  border-bottom: 1px solid var(--gris-cl);
   cursor: pointer;
-  font-family: Tahoma;
-  font-size: 12px;
-  font-weight: bold;
-  color: var(--noir);
+  user-select: none;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
-.mf-btn-page:hover:not(:disabled) { background: var(--gris-cl); }
-.mf-btn-page:disabled { opacity: .35; cursor: not-allowed; }
+.mf-groupe-header:hover { background: var(--gris-cl); }
+.mf-groupe-titre {
+  font-family: Impact, sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--noir);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mf-groupe-count {
+  font-family: Tahoma;
+  font-size: 11px;
+  color: #999;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.mf-groupe-fleche {
+  font-size: 12px;
+  color: #999;
+  transition: transform .2s;
+}
+.mf-groupe-fleche.ouvert { transform: rotate(90deg); }
+
+/* Corps du groupe (table) */
+.mf-groupe-corps {
+  overflow: hidden;
+  transition: max-height .25s ease;
+}
+.mf-groupe-corps.ferme { max-height: 0 !important; }
+
+/* Tableau dans le groupe */
+.mf-groupe-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.mf-groupe-table thead th {
+  background: var(--noir);
+  color: white;
+  font-family: Impact, sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 7px 8px;
+  text-align: left;
+  white-space: nowrap;
+  position: sticky;
+  top: 37px;
+  z-index: 1;
+}
+.mf-groupe-table thead th:not(:first-child) { text-align: right; }
 
 /* Ligne active dans le tableau famille */
+.mf-ligne { border-bottom: 1px solid #eee; cursor: pointer; }
+.mf-ligne:hover:not(.mf-active) { background: #fafafa; }
+.mf-ligne.mf-active { background: var(--rouge); }
 .mf-ligne.mf-active td { color: white !important; }
 
 /* ══════════════════════════════════════════════
@@ -1028,47 +1074,43 @@ header {
 ══════════════════════ -->
 <!-- ══ MODALE FAMILLE ══ -->
 <div id="m-famille" class="modale-bg" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="modale modale-xl" onclick="event.stopPropagation()" style="width:860px;">
+  <div class="modale modale-xl" onclick="event.stopPropagation()" style="width:900px; max-height:90vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
 
-    <div style="padding:18px 24px 0; display:flex; justify-content:space-between; align-items:flex-start;">
+    <!-- En-tête fixe -->
+    <div style="padding:16px 24px 12px; border-bottom:1px solid var(--gris-cl); flex-shrink:0; display:flex; justify-content:space-between; align-items:flex-start;">
       <div>
         <div class="modale-titre" id="mf-titre" style="margin-bottom:2px;"></div>
         <div style="font-size:12px; color:#888;" id="mf-norme"></div>
       </div>
       <button onclick="document.getElementById('m-famille').classList.remove('open')"
-        style="background:none; border:1px solid #aaa; padding:4px 12px; border-radius:3px; cursor:pointer; font-family:Tahoma; color:#555; flex-shrink:0; margin-left:16px;">✕ Fermer</button>
+        style="background:none; border:1px solid #aaa; padding:4px 12px; border-radius:3px; cursor:pointer; font-family:Tahoma; color:#555; flex-shrink:0; margin-left:16px; font-size:12px;">✕ Fermer</button>
     </div>
 
-    <div style="display:flex; gap:20px; padding:16px 24px; flex-wrap:wrap;">
+    <!-- Corps scrollable -->
+    <div style="display:flex; gap:0; flex:1; overflow:hidden;">
 
-      <!-- Tableau désignations + pagination -->
-      <div style="flex:1; min-width:280px; overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:12px;">
-          <thead id="mf-thead"></thead>
-          <tbody id="mf-tbody"></tbody>
-        </table>
-        <!-- Pagination -->
-        <div class="mf-pagination">
-          <button class="mf-btn-page" id="mf-btn-prev" onclick="mfChangerPage(-1)">&#8592; Préc.</button>
-          <span class="mf-page-info" id="mf-page-info"></span>
-          <button class="mf-btn-page" id="mf-btn-next" onclick="mfChangerPage(+1)">Suiv. &#8594;</button>
-        </div>
+      <!-- Colonne gauche : tableau avec accordéon, scroll vertical -->
+      <div style="flex:1; overflow-y:auto; padding:0 0 12px;">
+        <div id="mf-accordeon"></div>
       </div>
 
-      <!-- SVG + dims -->
-      <div style="width:220px; flex-shrink:0;">
-        <div style="background:#f7f7f7; border:1px solid #ddd; border-radius:3px; padding:12px; margin-bottom:10px; text-align:center;">
-          <div style="font-family:Impact; font-size:12px; letter-spacing:1px; color:var(--rouge); text-transform:uppercase; margin-bottom:6px;" id="mf-desig-label">← Sélectionnez une ligne</div>
-          <div id="mf-svg-zone"></div>
+      <!-- Colonne droite : image + dims, fixe -->
+      <div style="width:240px; flex-shrink:0; border-left:1px solid var(--gris-cl); padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+        <div style="background:#f7f7f7; border:1px solid #ddd; border-radius:3px; padding:10px; text-align:center;">
+          <div style="font-family:Impact; font-size:12px; letter-spacing:1px; color:var(--rouge); text-transform:uppercase; margin-bottom:8px;" id="mf-desig-label">← Sélectionnez une ligne</div>
+          <!-- Image PNG section -->
+          <div id="mf-img-zone" style="min-height:120px; display:flex; align-items:center; justify-content:center;">
+            <span style="color:#ccc; font-size:12px;">—</span>
+          </div>
         </div>
         <div id="mf-dims"></div>
       </div>
 
     </div>
 
-    <div style="padding:12px 24px; border-top:1px solid #eee; display:flex; justify-content:flex-end;">
-      <button onclick="document.getElementById('m-famille').classList.remove('open')"
-        class="btn btn-gris">Fermer</button>
+    <!-- Pied fixe -->
+    <div style="padding:10px 24px; border-top:1px solid var(--gris-cl); display:flex; justify-content:flex-end; flex-shrink:0;">
+      <button onclick="document.getElementById('m-famille').classList.remove('open')" class="btn btn-gris">Fermer</button>
     </div>
   </div>
 </div>

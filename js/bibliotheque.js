@@ -633,24 +633,39 @@ function biblioGetSectionsFiltrees() {
    MODALE FAMILLE — TABLEAU + SVG
 ══════════════════════════════════════════════ */
 
-/* État pagination modale famille */
-const MfPagination = {
-  famId:    '',       // identifiant famille (ex: 'IPE', 'HE')
-  famJson:  '',       // nom dans sections.json (ex: 'Profilés I')
-  sections: [],       // toutes les sections de la famille
-  page:     0,        // page courante (0-indexé)
-  parPage:  10        // lignes par page
+/* État modale famille */
+const MfEtat = {
+  famId:    '',
+  famJson:  '',
+  sections: [],
+  groupes:  []   // [ { serie, sections[] } ]
+};
+
+/* ── Mapping famId + série → chemin image PNG ────────────────────────── */
+const MF_PHOTOS = {
+  'IPE':       '../assets/profils/IPE.png',
+  'IPE A':     '../assets/profils/IPEA.png',
+  'IPE AA':    '../assets/profils/IPEAA.png',
+  'IPE O':     '../assets/profils/IPEO.png',
+  'IPN':       '../assets/profils/IPN.png',
+  'HEA':       '../assets/profils/HEA.png',
+  'HEA A':     '../assets/profils/HEAA.png',
+  'HEB':       '../assets/profils/HEB.png',
+  'HEM':       '../assets/profils/HEM.png',
+  'UPN':       '../assets/profils/UPN.png',
+  'UPE':       '../assets/profils/UPE.png',
+  'L égale':   '../assets/profils/Le.png',
+  'L inégale': '../assets/profils/Li.png'
 };
 
 /**
- * Ouvre la modale famille avec tableau paginé des désignations
+ * Ouvre la modale famille avec accordéon par série + scroll vertical
  * @param {string} famId — identifiant famille (IPE, HE, U, Cornière)
  */
 function biblioOuvrirModaleFamille(famId) {
   const m = document.getElementById('m-famille');
   if (!m) return;
 
-  // Mapping famId → famille dans sections.json
   const MAP_FAM = {
     'IPE':      'Profilés I',
     'HE':       'Profilés H',
@@ -659,142 +674,168 @@ function biblioOuvrirModaleFamille(famId) {
     'Plat':     'Plat'
   };
   const MAP_TITRE = {
-    'IPE': 'Famille IPE · IPN',
-    'HE':  'Famille HEA · HEB · HEM',
-    'U':   'Famille UPN · UPE',
+    'IPE':      'Famille IPE · IPN',
+    'HE':       'Famille HEA · HEB · HEM',
+    'U':        'Famille UPN · UPE',
     'Cornière': 'Famille Cornière',
-    'Plat': 'Famille Plat'
+    'Plat':     'Famille Plat'
   };
 
-  const famJson  = MAP_FAM[famId] || famId;
-  const famStd   = Biblio.data.standard.find(f => f.famille === famJson);
-  const sections = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === famId);
-  const norme    = famStd ? famStd.norme : '';
+  const famJson = MAP_FAM[famId] || famId;
+  const famStd  = Biblio.data.standard.find(f => f.famille === famJson);
+  const toutes  = famStd ? famStd.sections : Biblio.data.custom.filter(s => s.famille === famId);
+  const norme   = famStd ? famStd.norme : '';
 
-  // Initialiser état pagination
-  MfPagination.famId    = famId;
-  MfPagination.famJson  = famJson;
-  MfPagination.sections = sections;
-  MfPagination.page     = 0;
-
-  m.querySelector('#mf-titre').textContent = MAP_TITRE[famId] || famId;
-  m.querySelector('#mf-norme').textContent = norme;
-  m.querySelector('#mf-dims').innerHTML    = '';
-  m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
-
-  // SVG initial avec la première section
-  if (sections.length) {
-    m.querySelector('#mf-svg-zone').innerHTML =
-      biblioSvgCote({ famille: famJson, ...sections[0] }, 200, 180);
-  }
-
-  // Construire l'en-tête (une seule fois)
-  const colonnes  = _colonnesFamille(famJson);
-  const avecSerie = sections.some(s => s.serie);
-  let thead = '<tr style="background:rgb(30,30,35);">';
-  if (avecSerie) thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 8px;text-align:left;">Série</th>';
-  thead += '<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 10px;text-align:left;">Désig.</th>';
-  colonnes.forEach(c => {
-    thead += `<th style="color:white;font-family:Impact;font-size:11px;letter-spacing:1px;padding:8px 6px;text-align:right;">${c.label}</th>`;
+  // Regrouper par série
+  const groupesMap = {};
+  toutes.forEach(s => {
+    const serie = s.serie || famJson;
+    if (!groupesMap[serie]) groupesMap[serie] = [];
+    groupesMap[serie].push(s);
   });
-  thead += '</tr>';
-  m.querySelector('#mf-thead').innerHTML = thead;
+  const groupes = Object.entries(groupesMap).map(([serie, secs]) => ({ serie, secs }));
 
-  m.dataset.famille   = famId;
-  m.dataset.famjson   = famJson;
-  m.dataset.avecSerie = avecSerie ? '1' : '0';
+  // Stocker l'état
+  MfEtat.famId    = famId;
+  MfEtat.famJson  = famJson;
+  MfEtat.sections = toutes;
+  MfEtat.groupes  = groupes;
 
-  // Rendu première page
-  mfRendrePage(m, 0);
+  m.querySelector('#mf-titre').textContent       = MAP_TITRE[famId] || famId;
+  m.querySelector('#mf-norme').textContent       = norme;
+  m.querySelector('#mf-dims').innerHTML          = '';
+  m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
+  m.querySelector('#mf-img-zone').innerHTML      = '<span style="color:#ccc;font-size:12px;">—</span>';
+
+  // Construire l'accordéon
+  mfRendreAccordeon(m, groupes, famJson);
   m.classList.add('open');
 }
 
 /**
- * Rend une page du tableau et met à jour la pagination
- * @param {HTMLElement} m — modale
- * @param {number} page — page 0-indexée
+ * Construit l'accordéon dans la modale
  */
-function mfRendrePage(m, page) {
-  const { sections, parPage, famId, famJson } = MfPagination;
-  MfPagination.page = page;
+function mfRendreAccordeon(m, groupes, famJson) {
+  const conteneur = m.querySelector('#mf-accordeon');
+  if (!conteneur) return;
+  conteneur.innerHTML = '';
 
-  const debut  = page * parPage;
-  const fin    = Math.min(debut + parPage, sections.length);
-  const nbPages = Math.ceil(sections.length / parPage);
-  const avecSerie = m.dataset.avecSerie === '1';
-  const colonnes  = _colonnesFamille(famJson);
+  const colonnes = _colonnesFamille(famJson);
 
-  let tbody = '';
-  for (let i = debut; i < fin; i++) {
-    const s      = sections[i];
-    const idxGlobal = i; // index global pour biblioSelectionnerDesig
-    tbody += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig(${idxGlobal})"
-      style="border-bottom:1px solid #eee;cursor:pointer;"
-      onmouseover="if(!this.classList.contains('mf-active'))this.style.background='#fafafa'"
-      onmouseout="if(!this.classList.contains('mf-active'))this.style.background=''">`;
-    if (avecSerie) {
-      tbody += `<td style="padding:6px 8px;font-size:11px;color:#888;">${s.serie || '—'}</td>`;
-    }
-    tbody += `<td style="padding:6px 10px;font-weight:bold;">${s.desig}</td>`;
-    colonnes.forEach(c => {
-      tbody += `<td style="padding:6px;text-align:right;color:#555;">${s[c.key] !== undefined ? s[c.key] : '—'}</td>`;
+  groupes.forEach((grp, gi) => {
+    const groupeId = `mfg-${gi}`;
+
+    // En-tête groupe
+    const header = document.createElement('div');
+    header.className = 'mf-groupe-header';
+    header.innerHTML = `
+      <span class="mf-groupe-titre">
+        ${grp.serie}
+        <span class="mf-groupe-count">${grp.secs.length} désignation(s)</span>
+      </span>
+      <span class="mf-groupe-fleche ouvert" id="${groupeId}-fleche">▶</span>`;
+    header.onclick = () => mfToggleGroupe(groupeId);
+    conteneur.appendChild(header);
+
+    // Corps groupe
+    const corps = document.createElement('div');
+    corps.className = 'mf-groupe-corps';
+    corps.id = groupeId;
+
+    // Tableau
+    let thHtml = '<thead><tr>';
+    thHtml += '<th style="text-align:left;padding:7px 10px;">Désig.</th>';
+    colonnes.forEach(c => { thHtml += `<th style="padding:7px 6px;">${c.label}</th>`; });
+    thHtml += '</tr></thead>';
+
+    let tbHtml = '<tbody>';
+    grp.secs.forEach((s, si) => {
+      // Indice global dans toutes les sections
+      const idxGlobal = MfEtat.sections.indexOf(s);
+      tbHtml += `<tr class="mf-ligne" onclick="biblioSelectionnerDesig(${idxGlobal})">`;
+      tbHtml += `<td style="padding:6px 10px;font-weight:bold;">${s.desig}</td>`;
+      colonnes.forEach(c => {
+        tbHtml += `<td style="padding:6px;text-align:right;color:#555;">${s[c.key] !== undefined ? s[c.key] : '—'}</td>`;
+      });
+      tbHtml += '</tr>';
     });
-    tbody += '</tr>';
-  }
+    tbHtml += '</tbody>';
 
-  m.querySelector('#mf-tbody').innerHTML = tbody;
-
-  // Pagination
-  const info = document.getElementById('mf-page-info');
-  const prev = document.getElementById('mf-btn-prev');
-  const next = document.getElementById('mf-btn-next');
-  if (info) info.textContent = `${debut+1}–${fin} / ${sections.length}`;
-  if (prev) prev.disabled = page === 0;
-  if (next) next.disabled = page >= nbPages - 1;
+    corps.innerHTML = `<table class="mf-groupe-table">${thHtml}${tbHtml}</table>`;
+    // Hauteur initiale = ouverte
+    corps.style.maxHeight = corps.scrollHeight + 'px';
+    // Laisser le navigateur calculer après insertion
+    setTimeout(() => { corps.style.maxHeight = corps.scrollHeight + 2000 + 'px'; }, 10);
+    conteneur.appendChild(corps);
+  });
 }
 
 /**
- * Navigue dans la pagination (+1 ou -1)
+ * Ouvre/ferme un groupe de l'accordéon
  */
-function mfChangerPage(delta) {
-  const m = document.getElementById('m-famille');
-  if (!m) return;
-  const nbPages = Math.ceil(MfPagination.sections.length / MfPagination.parPage);
-  const nouvPage = Math.max(0, Math.min(MfPagination.page + delta, nbPages - 1));
-  mfRendrePage(m, nouvPage);
+function mfToggleGroupe(groupeId) {
+  const corps  = document.getElementById(groupeId);
+  const fleche = document.getElementById(`${groupeId}-fleche`);
+  if (!corps) return;
+
+  const ferme = corps.classList.contains('ferme');
+  if (ferme) {
+    corps.style.maxHeight = corps.scrollHeight + 2000 + 'px';
+    corps.classList.remove('ferme');
+    if (fleche) fleche.classList.add('ouvert');
+  } else {
+    corps.style.maxHeight = '0';
+    corps.classList.add('ferme');
+    if (fleche) fleche.classList.remove('ouvert');
+  }
 }
 
 /**
- * Sélectionne une désignation dans le tableau et met à jour le SVG + dims
- * @param {number} idxGlobal — index dans MfPagination.sections
+ * Sélectionne une désignation → image PNG + dimensions
+ * @param {number} idxGlobal — index dans MfEtat.sections
  */
 function biblioSelectionnerDesig(idxGlobal) {
   const m = document.getElementById('m-famille');
   if (!m) return;
 
-  const { sections, famJson } = MfPagination;
-  const s = sections[idxGlobal];
+  const s = MfEtat.sections[idxGlobal];
   if (!s) return;
 
-  // Index local dans la page courante
-  const debut = MfPagination.page * MfPagination.parPage;
-  const idxLocal = idxGlobal - debut;
-
-  // Mettre en évidence la ligne
-  m.querySelectorAll('.mf-ligne').forEach((tr, i) => {
-    const actif = i === idxLocal;
-    tr.classList.toggle('mf-active', actif);
-    tr.style.background = actif ? 'rgb(210,35,42)' : '';
-    tr.querySelectorAll('td').forEach(td => td.style.color = actif ? 'white' : '');
+  // Mettre en évidence la ligne (toutes les lignes de tous les groupes)
+  m.querySelectorAll('.mf-ligne').forEach(tr => {
+    tr.classList.remove('mf-active');
+  });
+  // Trouver la bonne ligne par onclick
+  m.querySelectorAll('.mf-ligne').forEach(tr => {
+    if (tr.getAttribute('onclick') === `biblioSelectionnerDesig(${idxGlobal})`) {
+      tr.classList.add('mf-active');
+      // Ouvrir le groupe parent si fermé
+      const groupe = tr.closest('.mf-groupe-corps');
+      if (groupe && groupe.classList.contains('ferme')) {
+        mfToggleGroupe(groupe.id);
+      }
+    }
   });
 
-  // Mettre à jour le SVG coté
-  m.querySelector('#mf-svg-zone').innerHTML =
-    biblioSvgCote({ famille: famJson, ...s }, 200, 180);
-  m.querySelector('#mf-desig-label').textContent = `${s.serie || famJson} ${s.desig}`;
+  // Mettre à jour le label
+  m.querySelector('#mf-desig-label').textContent = `${s.serie || MfEtat.famJson} ${s.desig}`;
 
-  // Mettre à jour les dimensions
-  const dims = _dimsSection(s, famJson);
+  // Afficher l'image PNG selon la série
+  const serie   = s.serie || MfEtat.famId;
+  const imgSrc  = MF_PHOTOS[serie] || null;
+  const imgZone = m.querySelector('#mf-img-zone');
+  if (imgZone) {
+    if (imgSrc) {
+      imgZone.innerHTML = `<img src="${imgSrc}" alt="${serie}"
+        style="max-width:100%; max-height:160px; object-fit:contain; display:block; margin:0 auto;"
+        onerror="this.parentNode.innerHTML='<span style=color:#ccc;font-size:11px>Image non disponible</span>'">`;
+    } else {
+      imgZone.innerHTML = `<div style="padding:10px;">${biblioSvgCote({ famille: MfEtat.famJson, ...s }, 180, 160)}</div>`;
+    }
+  }
+
+  // Dimensions
+  const dims = _dimsSection(s, MfEtat.famJson);
   m.querySelector('#mf-dims').innerHTML = dims.map(d =>
     `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:12px;">
       <span style="color:#666;">${d[0]}</span>
