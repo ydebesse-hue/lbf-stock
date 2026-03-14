@@ -263,8 +263,20 @@ function biblioOuvrirModaleSerie(serie, famId) {
   m.querySelector('#mf-titre').textContent       = serie;
   m.querySelector('#mf-norme').textContent       = famStd.norme || '';
   m.querySelector('#mf-dims').innerHTML          = '';
-  m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
-  m.querySelector('#mf-img-zone').innerHTML      = '<span style="color:#ccc;font-size:12px;">—</span>';
+  m.querySelector('#mf-desig-label').textContent = serie;
+
+  // Afficher l'image de la série dès l'ouverture
+  const imgSrcInit = MF_PHOTOS[serie] || null;
+  const imgZone    = m.querySelector('#mf-img-zone');
+  if (imgZone) {
+    if (imgSrcInit) {
+      imgZone.innerHTML = `<img src="${imgSrcInit}" alt="${serie}"
+        style="max-width:100%; max-height:220px; object-fit:contain; display:block; margin:0 auto;"
+        onerror="this.parentNode.innerHTML='<span style=color:#ccc;font-size:11px>Image non disponible</span>'">`;
+    } else {
+      imgZone.innerHTML = `<span style="color:#ccc;font-size:12px;">—</span>`;
+    }
+  }
 
   // Construire le tableau simple (sans accordéon, une seule série)
   mfRendreTableauSimple(m, sections, famJson, serie);
@@ -772,7 +784,7 @@ function biblioSelectionnerDesig(idxGlobal) {
   if (imgZone) {
     if (imgSrc) {
       imgZone.innerHTML = `<img src="${imgSrc}" alt="${serie}"
-        style="max-width:100%; max-height:160px; object-fit:contain; display:block; margin:0 auto;"
+        style="max-width:100%; max-height:220px; object-fit:contain; display:block; margin:0 auto;"
         onerror="this.parentNode.innerHTML='<span style=color:#ccc;font-size:11px>Image non disponible</span>'">`;
     } else {
       imgZone.innerHTML = `<div style="padding:10px;">${biblioSvgCote({ famille: MfEtat.famJson, ...s }, 180, 160)}</div>`;
