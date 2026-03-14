@@ -67,24 +67,38 @@ function biblioRendreGrille() {
   const conteneur = document.getElementById('biblio-grille');
   if (!conteneur) return;
 
-  // Définition des 4 familles affichées + leur mapping vers sections.json
+  // ── Configuration des 4 familles ──────────────────────────────────────────
+  // photos[] : liste ordonnée des images du carrousel.
+  //   - src   : chemin relatif depuis views/ (ex: '../assets/profils/ipe.png')
+  //   - label : légende affichée sous la photo
+  // Si aucune photo n'est disponible (404), le SVG placeholder s'affiche.
   const FAMILLES_AFFICHEES = [
     {
       id:       'IPE',
       titre:    'IPE',
-      sousTitre:'IPE · IPE A · IPE O · IPN',
+      sousTitre:'IPE · IPE A · IPE AA · IPE O · IPN',
       norme:    'EN 10034 / EN 10024',
       famJson:  ['Profilés I'],
-      // Chemin image réelle — remplacer par '../assets/profils/ipe.jpg' quand disponible
-      photo:    null
+      photos: [
+        { src: '../assets/profils/IPE.png',    label: 'IPE'    },
+        { src: '../assets/profils/IPEA.png',   label: 'IPE A'  },
+        { src: '../assets/profils/IPEAA.png',  label: 'IPE AA' },
+        { src: '../assets/profils/IPEO.png',   label: 'IPE O'  },
+        { src: '../assets/profils/IPN.png',    label: 'IPN'    }
+      ]
     },
     {
       id:       'HE',
       titre:    'HE',
-      sousTitre:'HEA · HEB · HEM · HEA A',
+      sousTitre:'HEA · HEA A · HEB · HEM',
       norme:    'EN 10034',
       famJson:  ['Profilés H'],
-      photo:    null
+      photos: [
+        { src: '../assets/profils/HEA.png',  label: 'HEA'   },
+        { src: '../assets/profils/HEAA.png', label: 'HEA A' },
+        { src: '../assets/profils/HEB.png',  label: 'HEB'   },
+        { src: '../assets/profils/HEM.png',  label: 'HEM'   }
+      ]
     },
     {
       id:       'U',
@@ -92,7 +106,10 @@ function biblioRendreGrille() {
       sousTitre:'UPN · UPE',
       norme:    'EN 10279 / EN 10162',
       famJson:  ['Profilés U'],
-      photo:    null
+      photos: [
+        { src: '../assets/profils/UPN.png', label: 'UPN' },
+        { src: '../assets/profils/UPE.png', label: 'UPE' }
+      ]
     },
     {
       id:       'Cornière',
@@ -100,7 +117,10 @@ function biblioRendreGrille() {
       sousTitre:'L égale · L inégale',
       norme:    'EN 10056-1 / -2',
       famJson:  ['Cornière'],
-      photo:    null
+      photos: [
+        { src: '../assets/profils/Le.png', label: 'L égale'   },
+        { src: '../assets/profils/Li.png', label: 'L inégale' }
+      ]
     }
   ];
 
@@ -152,34 +172,61 @@ function biblioRendreGrille() {
 }
 
 /**
- * Crée une carte famille améliorée
- * @param {Object} fam  — { id, titre, sousTitre, norme, famJson, photo }
+ * Crée une carte famille avec carrousel photo
+ * @param {Object} fam     — { id, titre, sousTitre, norme, famJson, photos[] }
  * @param {number} nbDesig — nombre de désignations
  * @returns {HTMLElement}
  */
 function biblioCreerCarteFamille(fam, nbDesig) {
+  const carteId = `cfam-${fam.id.replace(/[^a-zA-Z0-9]/g,'_')}`;
+
   const carte = document.createElement('div');
   carte.className = 'biblio-carte-famille';
-  carte.onclick = () => biblioOuvrirModaleFamille(fam.id);
+  carte.id = carteId;
 
-  // Zone visuelle : photo réelle ou placeholder SVG multi-schémas
-  let visuelHtml;
-  if (fam.photo) {
-    // Photo réelle disponible
-    visuelHtml = `
-      <div class="cfam-visuel">
-        <img class="cfam-photo" src="${fam.photo}" alt="${fam.titre}"
-             onerror="this.parentNode.innerHTML=biblioPlaceholderSvg('${fam.id}')">
-      </div>`;
-  } else {
-    // Placeholder SVG multi-schémas
-    visuelHtml = `
-      <div class="cfam-visuel">
-        <div class="cfam-placeholder">
-          <div class="cfam-schemas">${biblioSchemasFamille(fam.id)}</div>
-          <span class="cfam-placeholder-label">Photo à venir</span>
-        </div>
-      </div>`;
+  // Clic sur la carte → ouvre modale (sauf clic sur boutons nav)
+  carte.onclick = (e) => {
+    if (!e.target.closest('.cfam-nav')) biblioOuvrirModaleFamille(fam.id);
+  };
+
+  // ── Zone visuelle : carrousel ou placeholder SVG ──
+  const nbPhotos = fam.photos ? fam.photos.length : 0;
+
+  // Slides : une par photo
+  let slidesHtml = '';
+  if (nbPhotos > 0) {
+    fam.photos.forEach((p, i) => {
+      slidesHtml += `
+        <div class="cfam-slide${i === 0 ? ' cfam-slide-active' : ''}" data-idx="${i}">
+          <img src="${p.src}" alt="${p.label}"
+               onerror="carouselPhotoErreur('${carteId}',${i})"
+               onload="carouselPhotoOk('${carteId}',${i})">
+          <span class="cfam-slide-label">${p.label}</span>
+        </div>`;
+    });
+  }
+
+  // Placeholder SVG (visible si aucune photo ou toutes en erreur)
+  const placeholderHtml = `
+    <div class="cfam-placeholder cfam-slide${nbPhotos === 0 ? ' cfam-slide-active' : ''}" data-idx="${nbPhotos}">
+      <div class="cfam-schemas">${biblioSchemasFamille(fam.id)}</div>
+      <span class="cfam-placeholder-label">Photo à venir</span>
+    </div>`;
+
+  // Boutons nav (masqués si 1 seule diapo)
+  const navHtml = nbPhotos > 1 ? `
+    <button class="cfam-nav cfam-nav-prev" onclick="carouselNav('${carteId}',-1)" title="Précédent">&#8249;</button>
+    <button class="cfam-nav cfam-nav-next" onclick="carouselNav('${carteId}',+1)" title="Suivant">&#8250;</button>` : '';
+
+  // Indicateurs (points)
+  let dotsHtml = '';
+  if (nbPhotos > 1) {
+    dotsHtml = '<div class="cfam-dots">';
+    fam.photos.forEach((_, i) => {
+      dotsHtml += `<span class="cfam-dot${i === 0 ? ' cfam-dot-active' : ''}"
+        onclick="event.stopPropagation();carouselAller('${carteId}',${i})"></span>`;
+    });
+    dotsHtml += '</div>';
   }
 
   carte.innerHTML = `
@@ -187,14 +234,168 @@ function biblioCreerCarteFamille(fam, nbDesig) {
       <div class="cfam-titre">${fam.titre}</div>
       <div class="cfam-sous-titre">${fam.sousTitre}</div>
     </div>
-    ${visuelHtml}
+    <div class="cfam-visuel" data-nb-photos="${nbPhotos}" data-nb-ok="0" data-cur="0">
+      ${slidesHtml}
+      ${placeholderHtml}
+      ${navHtml}
+      ${dotsHtml}
+    </div>
     <div class="cfam-footer">
       <span class="cfam-norme">${fam.norme}</span>
       <span class="cfam-count">${nbDesig} réf.</span>
       <span class="cfam-fleche">›</span>
     </div>`;
 
+  // Démarrer l'auto-play si plusieurs photos
+  if (nbPhotos > 1) {
+    setTimeout(() => carouselAutoPlay(carteId, fam.photos.length), 3000);
+  }
+
   return carte;
+}
+
+/* ══════════════════════════════════════════════
+   CARROUSEL — gestion photos + fallback SVG
+══════════════════════════════════════════════ */
+
+/** Registre des timers auto-play par carteId */
+const _carouselTimers = {};
+
+/**
+ * Callback : une photo a chargé correctement
+ */
+function carouselPhotoOk(carteId, idx) {
+  const carte  = document.getElementById(carteId);
+  if (!carte) return;
+  const visuel = carte.querySelector('.cfam-visuel');
+  if (!visuel) return;
+  const nb = parseInt(visuel.dataset.nbPhotos, 10);
+  const ok = parseInt(visuel.dataset.nbOk || '0', 10) + 1;
+  visuel.dataset.nbOk = ok;
+
+  // Si c'est la première photo OK et qu'on est sur le placeholder → afficher idx 0
+  if (ok === 1) {
+    _carouselMontrer(carte, 0);
+  }
+}
+
+/**
+ * Callback : une photo est en erreur (404 ou inaccessible)
+ * Si toutes les photos sont en erreur → afficher le placeholder SVG
+ */
+function carouselPhotoErreur(carteId, idx) {
+  const carte  = document.getElementById(carteId);
+  if (!carte) return;
+  const visuel = carte.querySelector('.cfam-visuel');
+  if (!visuel) return;
+
+  // Masquer la slide en erreur
+  const slide = visuel.querySelector(`.cfam-slide[data-idx="${idx}"]`);
+  if (slide) slide.style.display = 'none';
+
+  // Compter les slides encore visibles (hors placeholder)
+  const slidesDispo = [...visuel.querySelectorAll('.cfam-slide:not(.cfam-placeholder)')]
+    .filter(s => s.style.display !== 'none');
+
+  if (slidesDispo.length === 0) {
+    // Toutes en erreur → fallback SVG
+    const placeholder = visuel.querySelector('.cfam-placeholder');
+    if (placeholder) {
+      placeholder.classList.add('cfam-slide-active');
+      placeholder.style.display = '';
+    }
+    // Masquer nav + dots
+    visuel.querySelectorAll('.cfam-nav, .cfam-dots').forEach(el => el.style.display = 'none');
+  }
+}
+
+/**
+ * Navigation manuelle ±1
+ */
+function carouselNav(carteId, delta) {
+  const carte  = document.getElementById(carteId);
+  if (!carte) return;
+  const visuel = carte.querySelector('.cfam-visuel');
+  if (!visuel) return;
+
+  const slides = [...visuel.querySelectorAll('.cfam-slide:not(.cfam-placeholder)')]
+    .filter(s => s.style.display !== 'none');
+  if (!slides.length) return;
+
+  const cur    = parseInt(visuel.dataset.cur || '0', 10);
+  const nouv   = (cur + delta + slides.length) % slides.length;
+  _carouselMontrer(carte, parseInt(slides[nouv].dataset.idx, 10));
+
+  // Réinitialiser le timer auto-play
+  clearTimeout(_carouselTimers[carteId]);
+  const nbPhotos = parseInt(visuel.dataset.nbPhotos, 10);
+  if (nbPhotos > 1) {
+    _carouselTimers[carteId] = setTimeout(() => carouselAutoPlay(carteId, nbPhotos), 4000);
+  }
+}
+
+/**
+ * Aller directement à un index (via point)
+ */
+function carouselAller(carteId, idx) {
+  const carte = document.getElementById(carteId);
+  if (!carte) return;
+  _carouselMontrer(carte, idx);
+  clearTimeout(_carouselTimers[carteId]);
+  const visuel   = carte.querySelector('.cfam-visuel');
+  const nbPhotos = parseInt(visuel.dataset.nbPhotos, 10);
+  if (nbPhotos > 1) {
+    _carouselTimers[carteId] = setTimeout(() => carouselAutoPlay(carteId, nbPhotos), 4000);
+  }
+}
+
+/**
+ * Auto-play : avance toutes les 4s
+ */
+function carouselAutoPlay(carteId, nbPhotos) {
+  const carte  = document.getElementById(carteId);
+  if (!carte || !document.body.contains(carte)) return;
+
+  const visuel = carte.querySelector('.cfam-visuel');
+  const slides = [...visuel.querySelectorAll('.cfam-slide:not(.cfam-placeholder)')]
+    .filter(s => s.style.display !== 'none');
+  if (slides.length < 2) return;
+
+  const cur  = parseInt(visuel.dataset.cur || '0', 10);
+  const nouv = (cur + 1) % slides.length;
+  _carouselMontrer(carte, parseInt(slides[nouv].dataset.idx, 10));
+
+  _carouselTimers[carteId] = setTimeout(() => carouselAutoPlay(carteId, nbPhotos), 4000);
+}
+
+/**
+ * Affiche la slide d'index idx, masque les autres
+ */
+function _carouselMontrer(carte, idx) {
+  const visuel = carte.querySelector('.cfam-visuel');
+  if (!visuel) return;
+
+  // Trouver l'index local parmi les slides visibles
+  const slidesDispo = [...visuel.querySelectorAll('.cfam-slide:not(.cfam-placeholder)')]
+    .filter(s => s.style.display !== 'none');
+  const idxLocal = slidesDispo.findIndex(s => parseInt(s.dataset.idx, 10) === idx);
+  const idxEffectif = idxLocal >= 0 ? idxLocal : 0;
+  const slideEffective = slidesDispo[idxEffectif];
+  if (!slideEffective) return;
+
+  visuel.dataset.cur = idxEffectif;
+
+  // Masquer toutes les slides non-placeholder
+  slidesDispo.forEach(s => s.classList.remove('cfam-slide-active'));
+  slideEffective.classList.add('cfam-slide-active');
+
+  // Masquer placeholder
+  const placeholder = visuel.querySelector('.cfam-placeholder');
+  if (placeholder) placeholder.classList.remove('cfam-slide-active');
+
+  // Mettre à jour les points
+  const dots = visuel.querySelectorAll('.cfam-dot');
+  dots.forEach((d, i) => d.classList.toggle('cfam-dot-active', i === idxEffectif));
 }
 
 /**
