@@ -1563,7 +1563,10 @@ const Stock = (() => {
         // Afficher l'image — masquer le SVG
         img.src = `../assets/profils/${nomFichier}`;
         img.alt = `Section ${desig}`;
-        img.style.display = 'block';
+        img.style.display  = 'block';
+        img.style.cursor   = 'zoom-in';
+        img.dataset.zoom   = '0';
+        img.onclick        = () => _zoomImage(img);
         if (svgEl) svgEl.style.display = 'none';
 
         // Fallback SVG si l'image ne charge pas
@@ -1933,6 +1936,14 @@ const Stock = (() => {
   function _fermerModale(id) {
     const m = document.getElementById(id);
     if (m) m.classList.remove('open');
+    // Nettoyer l'overlay zoom s'il est ouvert
+    const overlay = document.getElementById('stock-zoom-overlay');
+    if (overlay) {
+      overlay.remove();
+      // Remettre l'état zoom de l'image à zéro
+      const img = document.getElementById('fiche-img');
+      if (img) { img.dataset.zoom = '0'; img.style.cursor = 'zoom-in'; }
+    }
   }
 
   /**
@@ -2185,6 +2196,63 @@ const Stock = (() => {
 
   // Exposer _ouvrirCarte globalement (appelée depuis le HTML généré)
   window._ouvrirCarte = _ouvrirCarte;
+
+  /* ──────────────────────────────────────────────────────────────
+     ZOOM IMAGE FICHE SECTION
+     ────────────────────────────────────────────────────────────── */
+
+  /**
+   * Toggle zoom plein écran sur l'image de la fiche section
+   * Identique au comportement de la bibliothèque (mfZoomImage)
+   * @param {HTMLImageElement} img
+   */
+  function _zoomImage(img) {
+    const estZoom = img.dataset.zoom === '1';
+
+    if (estZoom) {
+      // Retour à la normale
+      img.dataset.zoom   = '0';
+      img.style.cursor   = 'zoom-in';
+      const overlay = document.getElementById('stock-zoom-overlay');
+      if (overlay) overlay.remove();
+    } else {
+      // Créer l'overlay plein écran
+      img.dataset.zoom = '1';
+      img.style.cursor = 'zoom-out';
+
+      const overlay = document.createElement('div');
+      overlay.id = 'stock-zoom-overlay';
+      overlay.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.75);
+        display:flex; align-items:center; justify-content:center;
+        z-index:9999; cursor:zoom-out;`;
+      overlay.onclick = () => _zoomImage(img);
+
+      // Image agrandie
+      const imgGrande = document.createElement('img');
+      imgGrande.src   = img.src;
+      imgGrande.alt   = img.alt;
+      imgGrande.style.cssText = `
+        max-width:90vw; max-height:85vh;
+        object-fit:contain; display:block;
+        border-radius:4px; box-shadow:0 8px 40px rgba(0,0,0,0.6);`;
+      overlay.appendChild(imgGrande);
+
+      // Bouton fermer
+      const btnFermer = document.createElement('button');
+      btnFermer.textContent = '✕';
+      btnFermer.style.cssText = `
+        position:absolute; top:16px; right:20px;
+        background:rgba(255,255,255,0.15); border:none; color:white;
+        font-size:22px; cursor:pointer; border-radius:50%;
+        width:36px; height:36px; display:flex; align-items:center; justify-content:center;`;
+      btnFermer.onclick = (e) => { e.stopPropagation(); _zoomImage(img); };
+      overlay.appendChild(btnFermer);
+
+      document.body.appendChild(overlay);
+    }
+  }
+
 
   /* ──────────────────────────────────────────────────────────────
      API PUBLIQUE
