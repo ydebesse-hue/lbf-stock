@@ -193,22 +193,22 @@ function biblioCreerCarteFamille(fam, nbDesig) {
   const nbPhotos = fam.photos ? fam.photos.length : 0;
 
   // Slides : une par photo
+  // La 1ère slide est active par défaut — le placeholder n'apparaît que si toutes les photos échouent
   let slidesHtml = '';
   if (nbPhotos > 0) {
     fam.photos.forEach((p, i) => {
       slidesHtml += `
         <div class="cfam-slide${i === 0 ? ' cfam-slide-active' : ''}" data-idx="${i}">
           <img src="${p.src}" alt="${p.label}"
-               onerror="carouselPhotoErreur('${carteId}',${i})"
-               onload="carouselPhotoOk('${carteId}',${i})">
+               onerror="carouselPhotoErreur('${carteId}',${i})">
           <span class="cfam-slide-label">${p.label}</span>
         </div>`;
     });
   }
 
-  // Placeholder SVG (visible si aucune photo ou toutes en erreur)
+  // Placeholder SVG — masqué par défaut, visible seulement si toutes les photos sont en erreur
   const placeholderHtml = `
-    <div class="cfam-placeholder cfam-slide${nbPhotos === 0 ? ' cfam-slide-active' : ''}" data-idx="${nbPhotos}">
+    <div class="cfam-placeholder cfam-slide${nbPhotos === 0 ? ' cfam-slide-active' : ''}" data-idx="${nbPhotos}" style="${nbPhotos > 0 ? 'display:none' : ''}">
       <div class="cfam-schemas">${biblioSchemasFamille(fam.id)}</div>
       <span class="cfam-placeholder-label">Photo à venir</span>
     </div>`;
@@ -262,26 +262,15 @@ function biblioCreerCarteFamille(fam, nbDesig) {
 const _carouselTimers = {};
 
 /**
- * Callback : une photo a chargé correctement
+ * carouselPhotoOk — non utilisé (logique simplifiée : photo active par défaut)
+ * Conservé pour compatibilité ascendante si référencé ailleurs.
  */
-function carouselPhotoOk(carteId, idx) {
-  const carte  = document.getElementById(carteId);
-  if (!carte) return;
-  const visuel = carte.querySelector('.cfam-visuel');
-  if (!visuel) return;
-  const nb = parseInt(visuel.dataset.nbPhotos, 10);
-  const ok = parseInt(visuel.dataset.nbOk || '0', 10) + 1;
-  visuel.dataset.nbOk = ok;
-
-  // Si c'est la première photo OK et qu'on est sur le placeholder → afficher idx 0
-  if (ok === 1) {
-    _carouselMontrer(carte, 0);
-  }
-}
+function carouselPhotoOk(carteId, idx) { /* no-op */ }
 
 /**
  * Callback : une photo est en erreur (404 ou inaccessible)
- * Si toutes les photos sont en erreur → afficher le placeholder SVG
+ * Masque la slide, passe à la suivante disponible.
+ * Si toutes en erreur → affiche le placeholder SVG.
  */
 function carouselPhotoErreur(carteId, idx) {
   const carte  = document.getElementById(carteId);
@@ -291,9 +280,12 @@ function carouselPhotoErreur(carteId, idx) {
 
   // Masquer la slide en erreur
   const slide = visuel.querySelector(`.cfam-slide[data-idx="${idx}"]`);
-  if (slide) slide.style.display = 'none';
+  if (slide) {
+    slide.classList.remove('cfam-slide-active');
+    slide.style.display = 'none';
+  }
 
-  // Compter les slides encore visibles (hors placeholder)
+  // Slides encore disponibles (hors placeholder)
   const slidesDispo = [...visuel.querySelectorAll('.cfam-slide:not(.cfam-placeholder)')]
     .filter(s => s.style.display !== 'none');
 
@@ -301,11 +293,17 @@ function carouselPhotoErreur(carteId, idx) {
     // Toutes en erreur → fallback SVG
     const placeholder = visuel.querySelector('.cfam-placeholder');
     if (placeholder) {
-      placeholder.classList.add('cfam-slide-active');
       placeholder.style.display = '';
+      placeholder.classList.add('cfam-slide-active');
     }
-    // Masquer nav + dots
     visuel.querySelectorAll('.cfam-nav, .cfam-dots').forEach(el => el.style.display = 'none');
+  } else {
+    // Passer à la première slide disponible si la slide active était celle en erreur
+    const active = visuel.querySelector('.cfam-slide.cfam-slide-active');
+    if (!active || active.style.display === 'none') {
+      slidesDispo[0].classList.add('cfam-slide-active');
+      visuel.dataset.cur = '0';
+    }
   }
 }
 
