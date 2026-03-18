@@ -265,8 +265,7 @@ m.querySelector('#mf-titre').style.color  = 'var(--rouge)';
   };
   const _descFin = famStd && (famStd.description || famStd.desc) || _descMap[famJson] || '';
   m.querySelector('#mf-norme').innerHTML =
-    `<span style="font-size:12px;color:#aaa;font-family:Tahoma;">${_norme}</span>
-     <span style="font-size:12px;color:#888;margin-left:8px;">${_descFin}</span>`;
+    `<span style="font-size:12px;color:#aaa;font-family:Tahoma;">${_norme} — ${_descFin}</span>`;
   m.querySelector('#mf-dims').innerHTML          = '';
  m.querySelector('#mf-desig-label').textContent  = 'Dimensions normalisées';
 m.querySelector('#mf-desig-label').style.color  = 'var(--noir)';
