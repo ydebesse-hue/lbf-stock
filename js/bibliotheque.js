@@ -693,7 +693,20 @@ function biblioOuvrirModaleFamille(famId, serieActive) {
   MfEtat.groupes  = groupes;
 
   m.querySelector('#mf-titre').textContent       = MAP_TITRE[famId] || famId;
-  m.querySelector('#mf-norme').textContent       = norme;
+  const _norme = famStd ? (famStd.norme || '') : '';
+const _desc  = famStd ? (famStd.description || famStd.desc || '') : '';
+const _descMap = {
+  'Profilés I': 'Profilé en I à ailes parallèles',
+  'Profilés H': 'Profilé en H à larges ailes',
+  'Profilés U': 'Profilé en U',
+  'Cornière':   'Cornière à ailes égales ou inégales',
+  'Plat':       'Plat laminé à chaud',
+};
+const _descFin = _desc || _descMap[MfEtat.famJson] || '';
+m.querySelector('#mf-norme').innerHTML =
+  `<span style="background:var(--vert);color:white;font-family:Impact;font-size:11px;
+    letter-spacing:1px;padding:2px 8px;border-radius:2px;text-transform:uppercase;">${_norme}</span>
+   <span style="font-size:12px;color:#888;">${_descFin}</span>`;
   m.querySelector('#mf-dims').innerHTML          = '';
   m.querySelector('#mf-desig-label').textContent = '← Sélectionnez une ligne';
   m.querySelector('#mf-img-zone').innerHTML      = '<span style="color:#ccc;font-size:12px;">—</span>';
