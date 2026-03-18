@@ -1263,10 +1263,16 @@
 
       <!-- Schéma SVG + dimensions -->
       <div class="schema-zone">
-        <div class="schema-svg-zone">
-          <div class="schema-titre" id="fiche-schema-label">—</div>
-          <svg id="fiche-svg" width="180" height="180" viewBox="0 0 160 160"></svg>
-        </div>
+        <div class="schema-svg-zone" id="fiche-visuel">
+           <div class="schema-titre" id="fiche-schema-label">—</div>
+          <!-- Image réelle — affichée si disponible dans assets/profils/ -->
+          <img id="fiche-img" src="" alt=""
+       style="display:none; width:160px; height:160px; object-fit:contain;
+              border:1px solid var(--gris-clair); border-radius:3px;
+              background:#f7f7f7; cursor:zoom-in;">
+  <!-- SVG généré — fallback si pas d'image -->
+  <svg id="fiche-svg" width="180" height="180" viewBox="0 0 160 160"></svg>
+</div>
         <div class="schema-dims">
           <h4>Dimensions normalisées</h4>
           <div id="fiche-dims-list">
