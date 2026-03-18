@@ -256,7 +256,7 @@ function biblioOuvrirModaleSerie(serie, famId) {
   m.querySelector('#mf-titre').textContent       = serie;
   m.querySelector('#mf-norme').textContent       = famStd.norme || '';
   m.querySelector('#mf-dims').innerHTML          = '';
-  m.querySelector('#mf-desig-label').textContent = serie;
+ m.querySelector('#mf-desig-label').textContent = 'Dimensions normalisées';
 
   // Afficher l'image de la série dès l'ouverture
   const imgSrcInit = MF_PHOTOS[serie] || null;
