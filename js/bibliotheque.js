@@ -966,8 +966,11 @@ function biblioOuvrirFiche(idSec) {
   if (!modale) return;
 
   // Titre
-  modale.querySelector('.modale-titre').textContent =
+ modale.querySelector('.modale-titre').textContent =
     `Fiche section — ${section.famille} ${section.desig}`;
+  // Titre bloc dimensions
+  const titreSchema = modale.querySelector('.schema-dims h4');
+  if (titreSchema) titreSchema.textContent = 'Dimensions normalisées';
 
   // Badge norme
   const badgeZone = modale.querySelector('.detail-badge-zone');
