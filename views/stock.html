@@ -1253,7 +1253,7 @@
        ══════════════════════════════════════════════════════════════ -->
   <div id="m-fiche-section" class="modale-bg" role="dialog" aria-modal="true" aria-label="Fiche section">
     <div class="modale modale-lg">
-      <div class="modale-titre">Fiche section</div>
+      <div class="modale-titre" style="color:var(--rouge)">Fiche section</div>
 
       <!-- Badge norme + inventaire -->
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap">
@@ -1261,18 +1261,18 @@
         <span style="font-size:12px; color:#888">Profilé normalisé</span>
       </div>
 
-      <!-- Schéma SVG + dimensions -->
+    <!-- Schéma SVG + dimensions -->
       <div class="schema-zone">
         <div class="schema-svg-zone" id="fiche-visuel">
-           <div class="schema-titre" id="fiche-schema-label">—</div>
+          <!-- Libellé schema-titre supprimé (non affiché) -->
           <!-- Image réelle — affichée si disponible dans assets/profils/ -->
           <img id="fiche-img" src="" alt=""
-       style="display:none; width:160px; height:160px; object-fit:contain;
-              border:1px solid var(--gris-clair); border-radius:3px;
-              background:#f7f7f7; cursor:zoom-in;">
-  <!-- SVG généré — fallback si pas d'image -->
-  <svg id="fiche-svg" width="180" height="180" viewBox="0 0 160 160"></svg>
-</div>
+               style="display:none; width:220px; height:220px; object-fit:contain;
+                      border:1px solid var(--gris-clair); border-radius:3px;
+                      background:#f7f7f7; cursor:zoom-in;">
+          <!-- SVG généré — fallback si pas d'image -->
+          <svg id="fiche-svg" width="220" height="220" viewBox="0 0 160 160"></svg>
+        </div>
         <div class="schema-dims">
           <h4>Dimensions normalisées</h4>
           <div id="fiche-dims-list">
