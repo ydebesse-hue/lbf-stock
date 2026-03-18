@@ -1585,15 +1585,27 @@ const Stock = (() => {
     const titre = m.querySelector('.modale-titre');
     if (titre) titre.textContent = `Fiche section — ${type} ${desig}`;
 
-    /* Badge norme */
+    /* Badge norme + description */
     const badgeNorme = m.querySelector('#fiche-badge-norme');
-    if (badgeNorme) {
-      const normes = {
-        IPE: 'EN 10034', HEA: 'EN 10034', HEB: 'EN 10034',
-        UPN: 'EN 10279', 'Cornière': 'EN 10056-1', Plat: 'EN 10058'
-      };
-      badgeNorme.textContent = normes[type] || 'Section normalisée';
-    }
+    const descNorme  = m.querySelector('#fiche-desc-norme');
+    const NORMES = {
+      'IPE':       { norme: 'EN 10034',    desc: 'Profilé en I à ailes parallèles' },
+      'IPE A':     { norme: 'EN 10034',    desc: 'Profilé en I à ailes parallèles — série A' },
+      'IPE O':     { norme: 'EN 10034',    desc: 'Profilé en I à ailes parallèles — série O' },
+      'IPN':       { norme: 'EN 10024',    desc: 'Profilé en I à ailes inclinées' },
+      'HEA':       { norme: 'EN 10034',    desc: 'Profilé en H à larges ailes — série A' },
+      'HEB':       { norme: 'EN 10034',    desc: 'Profilé en H à larges ailes — série B' },
+      'HEM':       { norme: 'EN 10034',    desc: 'Profilé en H à larges ailes — série M' },
+      'UPN':       { norme: 'EN 10279',    desc: 'Profilé en U à ailes inclinées' },
+      'UPE':       { norme: 'EN 10279',    desc: 'Profilé en U à ailes parallèles' },
+      'Cornière':  { norme: 'EN 10056-1',  desc: 'Cornière à ailes égales ou inégales' },
+      'L égale':   { norme: 'EN 10056-1',  desc: 'Cornière à ailes égales' },
+      'L inégale': { norme: 'EN 10056-1',  desc: 'Cornière à ailes inégales' },
+      'Plat':      { norme: 'EN 10058',    desc: 'Plat laminé à chaud' },
+    };
+    const info = NORMES[type] || { norme: 'Section normalisée', desc: '' };
+    if (badgeNorme) badgeNorme.textContent = info.norme;
+    if (descNorme)  descNorme.textContent  = info.desc;
 
     /* Image de la section — avec fallback SVG si fichier absent */
     const zoneVisuel = m.querySelector('#fiche-visuel');
