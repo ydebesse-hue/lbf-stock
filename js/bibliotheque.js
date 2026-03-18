@@ -253,8 +253,8 @@ function biblioOuvrirModaleSerie(serie, famId) {
   MfEtat.groupes  = [{ serie, secs: sections }];
 
   // En-tête modale
-  m.querySelector('#mf-titre').textContent = `${_descMap[famJson] || famJson} — ${famStd ? (famStd.norme || '') : ''}`;
-  m.querySelector('#mf-titre').style.color = 'var(--noir)';
+  m.querySelector('#mf-titre').textContent  = serie;
+m.querySelector('#mf-titre').style.color  = 'var(--rouge)';
   const _norme = famStd ? (famStd.norme || '') : '';
   const _descMap = {
     'Profilés I': 'Profilé en I à ailes parallèles',
@@ -264,7 +264,8 @@ function biblioOuvrirModaleSerie(serie, famId) {
     'Plat':       'Plat laminé à chaud',
   };
   const _descFin = famStd && (famStd.description || famStd.desc) || _descMap[famJson] || '';
-  m.querySelector('#mf-norme').innerHTML = '';
+  m.querySelector('#mf-norme').innerHTML =
+    `<span style="font-size:12px;color:#aaa;font-family:Tahoma;">${_norme} — ${_descFin}</span>`;
   m.querySelector('#mf-dims').innerHTML          = '';
  m.querySelector('#mf-desig-label').textContent  = 'Dimensions normalisées';
 m.querySelector('#mf-desig-label').style.color  = 'var(--noir)';
@@ -858,8 +859,12 @@ function biblioSelectionnerDesig(idxGlobal) {
   // Mettre à jour le titre principal en rouge
   const _serie  = s.serie || MfEtat.famJson;
   const _titreDesig = s.desig.startsWith(_serie) ? s.desig : `${_serie} ${s.desig}`;
-  m.querySelector('#mf-desig-label').textContent = _titreDesig;
-  m.querySelector('#mf-desig-label').style.color = 'var(--rouge)';
+  m.querySelector('#mf-titre').textContent = _titreDesig;
+  m.querySelector('#mf-titre').style.color = 'var(--rouge)';
+  m.querySelector('#mf-titre').style.color = 'var(--rouge)';
+  // Titre fixe dimensions
+  m.querySelector('#mf-desig-label').textContent = 'Dimensions normalisées';
+  m.querySelector('#mf-desig-label').style.color = 'var(--noir)';
 
   // Afficher l'image PNG selon la série (ne pas recharger si déjà affichée)
   const serie   = s.serie || MfEtat.famId;
