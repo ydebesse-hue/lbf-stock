@@ -852,8 +852,12 @@ function biblioSelectionnerDesig(idxGlobal) {
     }
   });
 
-  // Mettre à jour le label
-  m.querySelector('#mf-desig-label').textContent = `${s.serie || MfEtat.famJson} ${s.desig}`;
+  // Mettre à jour le titre principal en rouge
+  m.querySelector('#mf-titre').textContent = `${s.serie || MfEtat.famJson} ${s.desig}`;
+  m.querySelector('#mf-titre').style.color = 'var(--rouge)';
+  // Titre fixe dimensions
+  m.querySelector('#mf-desig-label').textContent = 'Dimensions normalisées';
+  m.querySelector('#mf-desig-label').style.color = 'var(--noir)';
 
   // Afficher l'image PNG selon la série (ne pas recharger si déjà affichée)
   const serie   = s.serie || MfEtat.famId;
