@@ -1073,7 +1073,10 @@ header {
         <div class="modale-titre" id="mf-titre" style="margin-bottom:2px; color:var(--rouge);"></div>
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;" id="mf-norme"></div>
       </div>
-      
+      <button onclick="document.getElementById('m-famille').classList.remove('open')"
+        style="background:none; border:1px solid #aaa; padding:4px 12px; border-radius:3px; cursor:pointer; font-family:Tahoma; color:#555; flex-shrink:0; margin-left:16px; font-size:12px;">✕ Fermer</button>
+    </div>
+
     <!-- Corps scrollable : layout vertical -->
     <div style="flex:1; overflow-y:auto; padding:16px 24px; display:flex; flex-direction:column; gap:16px;">
 
@@ -1090,13 +1093,9 @@ header {
 
         <!-- Dimensions -->
         <div style="flex:1; min-width:180px;">
-         <div style="font-family:Impact; font-size:16px; letter-spacing:1px; color:var(--rouge);
-                      text-transform:uppercase; margin-bottom:4px;" id="mf-desig-label">
+          <div style="font-family:Impact; font-size:14px; letter-spacing:1px; color:var(--rouge);
+                      text-transform:uppercase; margin-bottom:10px;" id="mf-desig-label">
             ← Sélectionnez une ligne
-          </div>
-          <div style="font-family:Impact; font-size:11px; letter-spacing:1px;
-                      text-transform:uppercase; color:var(--noir); margin-bottom:10px;">
-            Dimensions normalisées
           </div>
           <div id="mf-dims"></div>
         </div>
