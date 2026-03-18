@@ -256,19 +256,18 @@ function biblioOuvrirModaleSerie(serie, famId) {
   m.querySelector('#mf-titre').textContent = `${_descMap[famJson] || famJson} — ${famStd ? (famStd.norme || '') : ''}`;
   m.querySelector('#mf-titre').style.color = 'var(--noir)';
   
-  const _descMap = {
+ const _descMap = {
     'Profilés I': 'Profilé en I à ailes parallèles',
     'Profilés H': 'Profilé en H à larges ailes',
     'Profilés U': 'Profilé en U',
     'Cornière':   'Cornière à ailes égales ou inégales',
     'Plat':       'Plat laminé à chaud',
   };
-   const _norme = famStd ? (famStd.norme || '') : '';
+  const _norme = famStd ? (famStd.norme || '') : '';
   const _descFin = famStd && (famStd.description || famStd.desc) || _descMap[famJson] || '';
+  m.querySelector('#mf-titre').textContent = `${_descFin} — ${_norme}`;
+  m.querySelector('#mf-titre').style.color = 'var(--noir)';
   m.querySelector('#mf-norme').innerHTML = '';
-  m.querySelector('#mf-dims').innerHTML          = '';
- m.querySelector('#mf-desig-label').textContent  = 'Dimensions normalisées';
-m.querySelector('#mf-desig-label').style.color  = 'var(--noir)';
 
   // Afficher l'image de la série dès l'ouverture
   const imgSrcInit = MF_PHOTOS[serie] || null;
