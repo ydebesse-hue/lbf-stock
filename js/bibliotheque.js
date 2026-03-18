@@ -853,7 +853,10 @@ function biblioSelectionnerDesig(idxGlobal) {
   });
 
   // Mettre à jour le titre principal en rouge
-  m.querySelector('#mf-titre').textContent = `${s.serie || MfEtat.famJson} ${s.desig}`;
+  const _serie  = s.serie || MfEtat.famJson;
+  const _titreDesig = s.desig.startsWith(_serie) ? s.desig : `${_serie} ${s.desig}`;
+  m.querySelector('#mf-titre').textContent = _titreDesig;
+  m.querySelector('#mf-titre').style.color = 'var(--rouge)';
   m.querySelector('#mf-titre').style.color = 'var(--rouge)';
   // Titre fixe dimensions
   m.querySelector('#mf-desig-label').textContent = 'Dimensions normalisées';
