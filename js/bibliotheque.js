@@ -253,10 +253,18 @@ function biblioOuvrirModaleSerie(serie, famId) {
   MfEtat.groupes  = [{ serie, secs: sections }];
 
   // En-tête modale
-  m.querySelector('#mf-titre').textContent       = serie;
-  m.querySelector('#mf-norme').textContent       = famStd.norme || '';
+  m.querySelector('#mf-titre').textContent  = serie;
+m.querySelector('#mf-titre').style.color  = 'var(--rouge)';
+  const _norme = famStd.norme || '';
+const _desc  = famStd.description || famStd.desc || '';
+m.querySelector('#mf-norme').innerHTML =
+  `<span style="background:var(--vert);color:white;font-family:Impact;font-size:11px;
+    letter-spacing:1px;padding:2px 8px;border-radius:2px;text-transform:uppercase;
+    margin-right:8px;">${_norme}</span>
+   <span style="font-size:12px;color:#888;">${_desc}</span>`;
   m.querySelector('#mf-dims').innerHTML          = '';
- m.querySelector('#mf-desig-label').textContent = 'Dimensions normalisées';
+ m.querySelector('#mf-desig-label').textContent  = 'Dimensions normalisées';
+m.querySelector('#mf-desig-label').style.color  = 'var(--noir)';
 
   // Afficher l'image de la série dès l'ouverture
   const imgSrcInit = MF_PHOTOS[serie] || null;
