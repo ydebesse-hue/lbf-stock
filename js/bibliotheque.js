@@ -255,13 +255,18 @@ function biblioOuvrirModaleSerie(serie, famId) {
   // En-tête modale
   m.querySelector('#mf-titre').textContent  = serie;
 m.querySelector('#mf-titre').style.color  = 'var(--rouge)';
-  const _norme = famStd.norme || '';
-const _desc  = famStd.description || famStd.desc || '';
-m.querySelector('#mf-norme').innerHTML =
-  `<span style="background:var(--vert);color:white;font-family:Impact;font-size:11px;
-    letter-spacing:1px;padding:2px 8px;border-radius:2px;text-transform:uppercase;
-    margin-right:8px;">${_norme}</span>
-   <span style="font-size:12px;color:#888;">${_desc}</span>`;
+  const _norme = famStd ? (famStd.norme || '') : '';
+  const _descMap = {
+    'Profilés I': 'Profilé en I à ailes parallèles',
+    'Profilés H': 'Profilé en H à larges ailes',
+    'Profilés U': 'Profilé en U',
+    'Cornière':   'Cornière à ailes égales ou inégales',
+    'Plat':       'Plat laminé à chaud',
+  };
+  const _descFin = famStd && (famStd.description || famStd.desc) || _descMap[famJson] || '';
+  m.querySelector('#mf-norme').innerHTML =
+    `<span style="font-size:12px;color:#aaa;font-family:Tahoma;">${_norme}</span>
+     <span style="font-size:12px;color:#888;margin-left:8px;">${_descFin}</span>`;
   m.querySelector('#mf-dims').innerHTML          = '';
  m.querySelector('#mf-desig-label').textContent  = 'Dimensions normalisées';
 m.querySelector('#mf-desig-label').style.color  = 'var(--noir)';
