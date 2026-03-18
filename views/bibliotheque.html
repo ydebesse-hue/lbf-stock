@@ -1077,19 +1077,19 @@ header {
     <!-- Corps scrollable : layout vertical -->
     <div style="flex:1; overflow-y:auto; padding:16px 24px; display:flex; flex-direction:column; gap:16px;">
 
-      <!-- Bloc haut : image grande + dimensions côte à côte -->
-      <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;">
+      <!-- Bloc haut : image gauche + dimensions droite -->
+      <div style="display:flex; flex-direction:row; gap:20px; align-items:flex-start;">
 
-        <!-- Image grande -->
-        <div style="flex:0 0 280px; background:#f7f7f7; border:1px solid var(--gris-cl);
+        <!-- Image gauche — taille fixe -->
+        <div style="flex:0 0 260px; background:#f7f7f7; border:1px solid var(--gris-cl);
                     border-radius:4px; padding:12px; text-align:center;">
-          <div id="mf-img-zone" style="height:220px; display:flex; align-items:center; justify-content:center;">
+          <div id="mf-img-zone" style="height:240px; display:flex; align-items:center; justify-content:center;">
             <span style="color:#ccc; font-size:12px;">—</span>
           </div>
         </div>
 
-        <!-- Dimensions -->
-        <div style="flex:1; min-width:180px;">
+       <!-- Dimensions -->
+        <div style="flex:1; min-width:0; overflow:hidden;">
          <div style="font-family:Impact; font-size:16px; letter-spacing:1px; color:var(--rouge);
                       text-transform:uppercase; margin-bottom:4px;" id="mf-desig-label">
             ← Sélectionnez une ligne
