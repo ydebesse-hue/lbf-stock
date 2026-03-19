@@ -1068,13 +1068,9 @@ header {
   <div class="modale modale-xl" onclick="event.stopPropagation()" style="width:900px; max-height:90vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
 
     <!-- En-tête fixe -->
-    <div style="padding:16px 24px 12px; border-bottom:1px solid var(--gris-cl); flex-shrink:0; display:flex; justify-content:space-between; align-items:flex-start;">
-      <div>
-        <div class="modale-titre" id="mf-titre" style="margin-bottom:2px; color:var(--rouge);"></div>
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;" id="mf-norme"></div>
-      </div>
-      <button onclick="document.getElementById('m-famille').classList.remove('open')"
-        style="background:none; border:1px solid #aaa; padding:4px 12px; border-radius:3px; cursor:pointer; font-family:Tahoma; color:#555; flex-shrink:0; margin-left:16px; font-size:12px;">✕ Fermer</button>
+    <div style="padding:16px 24px 12px; border-bottom:1px solid var(--gris-cl); flex-shrink:0;">
+      <div class="modale-titre" id="mf-titre" style="margin-bottom:4px; color:var(--rouge);"></div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;" id="mf-norme"></div>
     </div>
 
     <!-- Corps scrollable : layout vertical -->
